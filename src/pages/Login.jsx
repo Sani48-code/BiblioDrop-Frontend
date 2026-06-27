@@ -47,14 +47,29 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left — Decorative */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary to-secondary relative overflow-hidden flex-col items-center justify-center p-12">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
+      {/* Left — Real library photo */}
+      <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
+        {/* Background image */}
+        <img
+          src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&q=80"
+          alt="Library interior"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-primary/60" />
+
+        {/* Animated dot grid */}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '28px 28px' }}
+        />
+
+        {/* Center branding */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="relative z-10 text-center"
+          className="relative z-10 h-full flex flex-col items-center justify-center p-12 text-center"
         >
           <div className="flex items-center justify-center gap-3 mb-8">
             <BookOpen size={32} className="text-white" strokeWidth={2.5} />
@@ -69,7 +84,29 @@ const Login = () => {
             </motion.div>
           </div>
         </motion.div>
-        <div className="absolute bottom-8 text-white/40 text-xs">© 2025 BiblioDrop</div>
+
+        {/* Floating testimonial card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.5 }}
+          className="absolute bottom-8 left-8 right-8 z-20 bg-white/15 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl"
+        >
+          <div className="flex items-start gap-3">
+            <img
+              src="https://randomuser.me/api/portraits/women/44.jpg"
+              alt="Reader"
+              className="w-10 h-10 rounded-full object-cover ring-2 ring-white/40 shrink-0"
+              onError={(e) => { e.currentTarget.style.display = 'none' }}
+            />
+            <div>
+              <p className="text-white/90 text-sm italic leading-relaxed">
+                "I got 4 books delivered this month without leaving my room. BiblioDrop is incredible!"
+              </p>
+              <p className="text-white/60 text-xs mt-2 font-medium">Sarah Ahmed, Dhaka</p>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       {/* Right — Form */}

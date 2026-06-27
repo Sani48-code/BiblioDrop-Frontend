@@ -1,16 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
-import { BookX, ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from 'lucide-react'
+import { BookOpen, ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from 'lucide-react'
 import BookCard from '../components/BookCard'
 import SkeletonCard from '../components/SkeletonCard'
 
 const CATEGORIES = ['Fiction', 'Sci-Fi', 'Academic', 'History', 'Biography', 'Technology', 'Children', 'Other']
+const EMPTY_IMG = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80'
 
 const FilterSidebar = ({ filters, onChange, onClear }) => (
   <div className="bg-base-100 rounded-2xl border border-base-200 p-6 space-y-6">
+    {/* Header with book icon */}
     <div className="flex items-center justify-between">
-      <h3 className="font-semibold text-base-content">Filters</h3>
+      <div className="flex items-center gap-2">
+        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+          <BookOpen size={14} className="text-primary" />
+        </div>
+        <h3 className="font-semibold text-base-content">Filters</h3>
+      </div>
       <button onClick={onClear} className="text-xs text-primary hover:underline cursor-pointer">Clear all</button>
     </div>
 
@@ -139,7 +146,6 @@ const BrowseBooks = () => {
     if (f.availability) params.availability = f.availability
     if (f.sort) params.sort = f.sort
 
-    // Sync to URL
     const urlParams = {}
     Object.entries(params).forEach(([k, v]) => { if (v) urlParams[k] = v })
     setSearchParams(urlParams, { replace: true })
@@ -174,11 +180,21 @@ const BrowseBooks = () => {
     return pages
   }
 
+  // Active filter pills
+  const activeFilters = [
+    filters.search && { key: 'search', label: `"${filters.search}"` },
+    filters.category && { key: 'category', label: filters.category },
+    filters.minFee && { key: 'minFee', label: `Min ৳${filters.minFee}` },
+    filters.maxFee && { key: 'maxFee', label: `Max ৳${filters.maxFee}` },
+    filters.availability && { key: 'availability', label: filters.availability === 'available' ? 'Available' : 'Checked Out' },
+  ].filter(Boolean)
+
   return (
     <div className="container-custom py-10">
       {/* Page Header */}
-      <div className="flex items-end justify-between mb-8">
+      <div className="flex items-end justify-between mb-4">
         <div>
+          <p className="section-label mb-1">Library</p>
           <h1 className="font-display text-3xl sm:text-4xl text-base-content">Browse Books</h1>
           {!loading && totalBooks > 0 && (
             <p className="text-base-content/50 text-sm mt-1">
@@ -189,11 +205,43 @@ const BrowseBooks = () => {
         {/* Mobile filter button */}
         <button
           onClick={() => setMobileFilterOpen(true)}
-          className="lg:hidden btn btn-ghost btn-sm gap-1.5 border border-base-300 rounded-xl cursor-pointer"
+          className="lg:hidden flex items-center gap-1.5 border border-base-300 rounded-xl px-3.5 py-2 text-sm text-base-content/70 hover:border-primary hover:text-primary transition-colors cursor-pointer"
         >
           <SlidersHorizontal size={15} /> Filters
+          {activeFilters.length > 0 && (
+            <span className="w-4 h-4 rounded-full bg-primary text-primary-content text-[10px] flex items-center justify-center font-bold">
+              {activeFilters.length}
+            </span>
+          )}
         </button>
       </div>
+
+      {/* Active filter pills */}
+      {activeFilters.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {activeFilters.map(({ key, label }) => (
+            <span
+              key={key}
+              className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-medium"
+            >
+              {label}
+              <button
+                onClick={() => update(key, '')}
+                className="hover:text-primary/60 cursor-pointer focus:outline-none"
+                aria-label={`Remove ${label} filter`}
+              >
+                <X size={11} />
+              </button>
+            </span>
+          ))}
+          <button
+            onClick={clearAll}
+            className="text-xs text-base-content/50 hover:text-base-content px-2 py-1.5 transition-colors cursor-pointer"
+          >
+            Clear all
+          </button>
+        </div>
+      )}
 
       <div className="flex gap-8">
         {/* Desktop sidebar */}
@@ -208,10 +256,29 @@ const BrowseBooks = () => {
               {Array.from({ length: 9 }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
           ) : books.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-32 text-base-content/40 gap-4">
-              <BookX size={56} strokeWidth={1.5} />
-              <p className="text-xl font-semibold">No books match your filters</p>
-              <button onClick={clearAll} className="btn-primary-custom text-sm mt-2 cursor-pointer">
+            <div className="flex flex-col items-center justify-center py-20 text-center gap-5">
+              <div className="relative w-52 h-40 rounded-2xl overflow-hidden shadow-lg">
+                <img
+                  src={EMPTY_IMG}
+                  alt="Empty library"
+                  className="w-full h-full object-cover brightness-75"
+                  onError={(e) => { e.currentTarget.style.display = 'none' }}
+                />
+                <div className="absolute inset-0 bg-primary/30" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <BookOpen size={40} className="text-white opacity-70" strokeWidth={1.5} />
+                </div>
+              </div>
+              <div>
+                <p className="font-display text-xl text-base-content mb-1">No books found</p>
+                <p className="text-base-content/50 text-sm max-w-xs">
+                  We couldn&apos;t find any books matching your filters. Try adjusting your search.
+                </p>
+              </div>
+              <button
+                onClick={clearAll}
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-secondary text-white text-sm px-6 py-2.5 rounded-xl hover:opacity-90 transition-opacity cursor-pointer font-medium"
+              >
                 Clear filters
               </button>
             </div>
@@ -263,11 +330,11 @@ const BrowseBooks = () => {
           <div className="absolute bottom-0 left-0 right-0 bg-base-100 rounded-t-3xl p-6 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold">Filters</h3>
-              <button onClick={() => setMobileFilterOpen(false)} className="btn btn-ghost btn-sm btn-circle cursor-pointer">
+              <button onClick={() => setMobileFilterOpen(false)} className="w-8 h-8 rounded-full hover:bg-base-200 flex items-center justify-center transition-colors cursor-pointer">
                 <X size={18} />
               </button>
             </div>
-            <FilterSidebar filters={filters} onChange={(k, v) => { update(k, v); }} onClear={() => { clearAll(); setMobileFilterOpen(false) }} />
+            <FilterSidebar filters={filters} onChange={(k, v) => { update(k, v) }} onClear={() => { clearAll(); setMobileFilterOpen(false) }} />
           </div>
         </div>
       )}
