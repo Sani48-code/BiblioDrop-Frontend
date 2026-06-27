@@ -86,10 +86,10 @@ const ManageDeliveries = () => {
                   const currentIdx = STATUS_ORDER.indexOf(order.status)
                   return (
                     <tr key={order._id} className="hover:bg-base-200/40 transition-colors">
-                      <td className="px-5 py-4 text-base-content/70 max-w-[140px] truncate">{order.readerName || order.userEmail || '—'}</td>
-                      <td className="px-5 py-4 font-medium text-base-content max-w-[180px] truncate">{order.bookTitle || '—'}</td>
+                      <td className="px-5 py-4 text-base-content/70 max-w-[140px] truncate">{order.readerName || order.userEmail || '-'}</td>
+                      <td className="px-5 py-4 font-medium text-base-content max-w-[180px] truncate">{order.bookTitle || '-'}</td>
                       <td className="px-5 py-4 text-base-content/50">
-                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '—'}
+                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '-'}
                       </td>
                       <td className="px-5 py-4">
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[order.status] || 'bg-base-200 text-base-content'}`}>

@@ -113,7 +113,7 @@ const Register = () => {
         {step === 1 ? (
           <>
             <h2 className="font-display text-2xl text-base-content mb-1">Create Account</h2>
-            <p className="text-base-content/50 text-sm mb-6">Step 1 of 2 — Account Details</p>
+            <p className="text-base-content/50 text-sm mb-6">Step 1 of 2: Account Details</p>
 
             <form onSubmit={handleSubmit(onStep1Submit)} className="space-y-4">
               <div>

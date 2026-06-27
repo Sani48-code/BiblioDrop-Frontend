@@ -106,7 +106,7 @@ const ManageAllBooks = () => {
                     </td>
                     <td className="px-5 py-3 font-medium text-base-content max-w-[160px] truncate">{book.title}</td>
                     <td className="px-5 py-3 text-base-content/70">{book.author}</td>
-                    <td className="px-5 py-3 text-base-content/50 max-w-[140px] truncate text-xs">{book.librarianEmail || '—'}</td>
+                    <td className="px-5 py-3 text-base-content/50 max-w-[140px] truncate text-xs">{book.librarianEmail || '-'}</td>
                     <td className="px-5 py-3">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[book.status] || 'bg-base-200 text-base-content'}`}>
                         {book.status}

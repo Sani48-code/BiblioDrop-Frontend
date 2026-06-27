@@ -101,7 +101,7 @@ const ManageUsers = () => {
                       </span>
                     </td>
                     <td className="px-5 py-4 text-base-content/50">
-                      {u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                      {u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">

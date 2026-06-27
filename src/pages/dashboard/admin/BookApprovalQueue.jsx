@@ -86,8 +86,8 @@ const BookApprovalQueue = () => {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-base-content/40">
-                  <span>Librarian: <span className="text-base-content/60">{book.librarianEmail || '—'}</span></span>
-                  <span>Submitted: <span className="text-base-content/60">{book.createdAt ? new Date(book.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</span></span>
+                  <span>Librarian: <span className="text-base-content/60">{book.librarianEmail || '-'}</span></span>
+                  <span>Submitted: <span className="text-base-content/60">{book.createdAt ? new Date(book.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}</span></span>
                 </div>
 
                 {book.description && (

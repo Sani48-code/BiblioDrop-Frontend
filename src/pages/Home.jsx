@@ -45,7 +45,7 @@ const TESTIMONIALS = [
 
 const STEPS = [
   { icon: BookOpen, title: 'Browse & Discover', desc: 'Search through thousands of books from local libraries and independent owners' },
-  { icon: CreditCard, title: 'Pay Securely', desc: 'Pay a small delivery fee via Stripe — fast and completely safe' },
+  { icon: CreditCard, title: 'Pay Securely', desc: 'Pay a small delivery fee via Stripe. Fast and completely safe.' },
   { icon: PackageCheck, title: 'Receive at Door', desc: 'Your books arrive within 2–3 days, no library visit needed' },
 ]
 
@@ -102,9 +102,6 @@ const Home = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.7, ease: 'easeOut' }}
             >
-              <span className="inline-flex items-center gap-1.5 border border-primary/30 text-primary text-xs font-semibold px-3 py-1.5 rounded-full mb-6 bg-primary/5">
-                ✦ Discover. Borrow. Read.
-              </span>
               <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl text-base-content leading-tight mb-6">
                 Your Local Library,{' '}
                 <span className="italic gradient-text">Delivered.</span>

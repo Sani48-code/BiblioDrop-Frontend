@@ -70,10 +70,10 @@ const DeliveryHistory = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-base-content/60">{o.librarianEmail || o.librarian?.name || '—'}</td>
+                    <td className="px-5 py-4 text-base-content/60">{o.librarianEmail || o.librarian?.name || '-'}</td>
                     <td className="px-5 py-4 font-semibold text-base-content">৳{o.deliveryFee || 0}</td>
                     <td className="px-5 py-4 text-base-content/50">
-                      {o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                      {o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
                     </td>
                     <td className="px-5 py-4">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[o.status] || 'bg-base-200 text-base-content'}`}>

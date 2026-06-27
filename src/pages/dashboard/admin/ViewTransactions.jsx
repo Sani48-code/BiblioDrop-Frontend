@@ -63,12 +63,12 @@ const ViewTransactions = () => {
                         {(tx.stripeSessionId || tx._id || '').slice(0, 12)}…
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-base-content/60 max-w-[140px] truncate">{tx.userEmail || '—'}</td>
-                    <td className="px-5 py-4 text-base-content/60 max-w-[140px] truncate">{tx.librarianEmail || '—'}</td>
-                    <td className="px-5 py-4 font-medium text-base-content max-w-[160px] truncate">{tx.bookTitle || '—'}</td>
+                    <td className="px-5 py-4 text-base-content/60 max-w-[140px] truncate">{tx.userEmail || '-'}</td>
+                    <td className="px-5 py-4 text-base-content/60 max-w-[140px] truncate">{tx.librarianEmail || '-'}</td>
+                    <td className="px-5 py-4 font-medium text-base-content max-w-[160px] truncate">{tx.bookTitle || '-'}</td>
                     <td className="px-5 py-4 font-semibold text-primary">৳{(tx.amount || tx.deliveryFee || 0).toFixed(0)}</td>
                     <td className="px-5 py-4 text-base-content/50">
-                      {tx.createdAt ? new Date(tx.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                      {tx.createdAt ? new Date(tx.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
                     </td>
                   </tr>
                 ))}
