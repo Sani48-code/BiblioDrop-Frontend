@@ -55,56 +55,72 @@ const MyReviews = () => {
 
   return (
     <div>
-      <h1 className="text-2xl font-display font-bold mb-6">My Reviews</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="font-display text-2xl text-base-content">My Reviews</h1>
+        <span className="text-sm text-base-content/40">{reviews.length} reviews</span>
+      </div>
 
       {reviews.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-base-content/40 gap-4">
-          <Star size={48} />
-          <p className="text-lg font-semibold">No reviews yet</p>
-          <p className="text-sm">You can review books you&apos;ve received</p>
+        <div className="bg-base-100 border border-base-200 rounded-2xl p-16 text-center">
+          <Star size={40} className="text-base-content/20 mx-auto mb-3" />
+          <p className="text-base-content/40 text-sm">You can review books you&apos;ve received</p>
         </div>
       ) : (
         <div className="space-y-4">
           {reviews.map((rev) => (
-            <div key={rev._id} className="card bg-base-200 rounded-2xl p-5 shadow-sm">
+            <div key={rev._id} className="bg-base-100 border border-base-200 rounded-2xl p-5">
               <div className="flex items-start gap-4">
-                <img
-                  src={rev.bookImageURL || 'https://placehold.co/60x80/e2e8f0/1e293b?text=📚'}
-                  alt={rev.bookTitle}
-                  className="w-14 h-18 object-cover rounded-lg shrink-0"
-                />
+                <div className="w-12 h-16 rounded-xl overflow-hidden bg-base-200 shrink-0">
+                  {rev.bookImageURL ? (
+                    <img src={rev.bookImageURL} alt={rev.bookTitle} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20" />
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="font-semibold text-sm truncate">{rev.bookTitle}</p>
+                      <p className="font-semibold text-sm line-clamp-1 text-base-content">{rev.bookTitle}</p>
                       <StarRating value={rev.rating} readOnly size="sm" />
                       <p className="text-xs text-base-content/40 mt-0.5">
-                        {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString() : ''}
+                        {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}
                       </p>
                     </div>
                     {editingId !== rev._id && (
                       <div className="flex gap-1 shrink-0">
-                        <button onClick={() => startEdit(rev)} className="btn btn-ghost btn-xs"><Edit2 size={13} /></button>
-                        <button onClick={() => setDeleteId(rev._id)} className="btn btn-ghost btn-xs text-error"><Trash2 size={13} /></button>
+                        <button
+                          onClick={() => startEdit(rev)}
+                          title="Edit review"
+                          className="w-8 h-8 rounded-lg bg-base-200 hover:bg-base-300 flex items-center justify-center text-base-content/60 hover:text-base-content transition-colors cursor-pointer"
+                        >
+                          <Edit2 size={13} />
+                        </button>
+                        <button
+                          onClick={() => setDeleteId(rev._id)}
+                          title="Delete review"
+                          className="w-8 h-8 rounded-lg bg-error/10 hover:bg-error/20 flex items-center justify-center text-error/70 hover:text-error transition-colors cursor-pointer"
+                        >
+                          <Trash2 size={13} />
+                        </button>
                       </div>
                     )}
                   </div>
 
                   {editingId === rev._id ? (
-                    <form onSubmit={handleSubmit(handleEditSubmit)} className="mt-3 space-y-2">
+                    <form onSubmit={handleSubmit(handleEditSubmit)} className="mt-3 space-y-3">
                       <StarRating value={editRating} onChange={setEditRating} size="sm" />
                       <textarea
                         {...register('editComment', { required: true })}
-                        className="textarea textarea-bordered w-full text-sm"
+                        className="w-full border border-base-300 focus:border-primary rounded-xl px-4 py-3 text-sm bg-base-100 outline-none focus:ring-2 focus:ring-primary/20 resize-none"
                         rows={2}
                       />
                       <div className="flex gap-2">
-                        <button type="submit" className="btn btn-primary btn-xs">Save</button>
-                        <button type="button" onClick={() => setEditingId(null)} className="btn btn-ghost btn-xs">Cancel</button>
+                        <button type="submit" className="px-4 py-1.5 bg-primary text-primary-content text-xs rounded-lg font-medium cursor-pointer hover:opacity-90">Save</button>
+                        <button type="button" onClick={() => setEditingId(null)} className="px-4 py-1.5 border border-base-300 text-base-content/60 text-xs rounded-lg cursor-pointer hover:border-base-400">Cancel</button>
                       </div>
                     </form>
                   ) : (
-                    <p className="text-sm text-base-content/70 mt-2">{rev.comment}</p>
+                    <p className="text-sm text-base-content/60 mt-2 leading-relaxed">{rev.comment}</p>
                   )}
                 </div>
               </div>
@@ -113,15 +129,14 @@ const MyReviews = () => {
         </div>
       )}
 
-      {/* Delete modal */}
       {deleteId && (
         <div className="modal modal-open">
           <div className="modal-box rounded-2xl">
-            <h3 className="font-bold text-lg mb-2">Delete Review</h3>
-            <p className="text-base-content/60 mb-6">Are you sure you want to delete this review?</p>
+            <h3 className="font-display text-lg text-base-content mb-2">Delete Review</h3>
+            <p className="text-base-content/60 text-sm mb-6">Are you sure you want to delete this review?</p>
             <div className="flex justify-end gap-3">
-              <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="btn btn-error" onClick={handleDelete}>Delete</button>
+              <button className="border border-base-300 text-base-content/60 px-5 py-2 rounded-xl text-sm hover:border-base-400 cursor-pointer" onClick={() => setDeleteId(null)}>Cancel</button>
+              <button className="bg-error text-white px-5 py-2 rounded-xl text-sm cursor-pointer hover:opacity-90" onClick={handleDelete}>Delete</button>
             </div>
           </div>
           <div className="modal-backdrop" onClick={() => setDeleteId(null)} />
