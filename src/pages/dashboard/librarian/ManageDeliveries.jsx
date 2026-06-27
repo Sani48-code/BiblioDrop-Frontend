@@ -6,10 +6,10 @@ import { useAxiosSecure } from '../../../hooks/useAxiosSecure'
 const TABS = ['All', 'Pending', 'Dispatched', 'Delivered']
 const STATUS_ORDER = ['Pending', 'Dispatched', 'Delivered']
 
-const statusStyle = {
-  Pending: 'badge-warning',
-  Dispatched: 'badge-info',
-  Delivered: 'badge-success',
+const STATUS_STYLE = {
+  Pending: 'bg-warning/10 text-warning',
+  Dispatched: 'bg-info/10 text-info',
+  Delivered: 'bg-success/10 text-success',
 }
 
 const ManageDeliveries = () => {
@@ -37,23 +37,27 @@ const ManageDeliveries = () => {
     }
   }
 
-  if (loading) return <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-16 bg-base-200 rounded-xl animate-pulse" />)}</div>
+  if (loading) return <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-16 bg-base-200 rounded-2xl animate-pulse" />)}</div>
 
   return (
     <div>
-      <h1 className="text-2xl font-display font-bold mb-6">Manage Deliveries</h1>
+      <h1 className="font-display text-2xl text-base-content mb-6">Manage Deliveries</h1>
 
-      {/* Filter tabs */}
-      <div className="tabs tabs-boxed bg-base-200 w-fit mb-6">
+      {/* Underline tabs */}
+      <div className="flex gap-1 border-b border-base-300 mb-6">
         {TABS.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`tab ${tab === t ? 'tab-active' : ''}`}
+            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px cursor-pointer focus:outline-none ${
+              tab === t
+                ? 'border-primary text-primary'
+                : 'border-transparent text-base-content/50 hover:text-base-content'
+            }`}
           >
             {t}
             {t !== 'All' && (
-              <span className={`ml-1.5 badge badge-xs ${statusStyle[t] || ''}`}>
+              <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full font-normal ${tab === t ? 'bg-primary/10 text-primary' : 'bg-base-200 text-base-content/50'}`}>
                 {orders.filter((o) => o.status === t).length}
               </span>
             )}
@@ -62,48 +66,44 @@ const ManageDeliveries = () => {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-base-content/40 gap-4">
-          <Truck size={48} />
-          <p className="text-lg font-semibold">No deliveries in this category</p>
+        <div className="bg-base-100 border border-base-200 rounded-2xl p-16 text-center">
+          <Truck size={40} className="text-base-content/20 mx-auto mb-3" />
+          <p className="text-base-content/40 text-sm">No deliveries in this category</p>
         </div>
       ) : (
-        <div className="card bg-base-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-base-100 border border-base-200 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="table">
+            <table className="w-full text-sm">
               <thead>
-                <tr>
-                  <th>Reader</th>
-                  <th>Book Title</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Update Status</th>
+                <tr className="bg-base-200 border-b border-base-300">
+                  {['Reader', 'Book', 'Date', 'Status', 'Update'].map((h) => (
+                    <th key={h} className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-base-content/50">{h}</th>
+                  ))}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-base-200">
                 {filtered.map((order) => {
                   const currentIdx = STATUS_ORDER.indexOf(order.status)
                   return (
-                    <tr key={order._id} className="hover">
-                      <td className="text-sm">{order.readerName || order.userEmail || '—'}</td>
-                      <td className="font-medium text-sm max-w-[180px] truncate">{order.bookTitle || '—'}</td>
-                      <td className="text-sm text-base-content/60">
-                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : '—'}
+                    <tr key={order._id} className="hover:bg-base-200/40 transition-colors">
+                      <td className="px-5 py-4 text-base-content/70 max-w-[140px] truncate">{order.readerName || order.userEmail || '—'}</td>
+                      <td className="px-5 py-4 font-medium text-base-content max-w-[180px] truncate">{order.bookTitle || '—'}</td>
+                      <td className="px-5 py-4 text-base-content/50">
+                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '—'}
                       </td>
-                      <td>
-                        <span className={`badge badge-sm ${statusStyle[order.status] || 'badge-ghost'}`}>
+                      <td className="px-5 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[order.status] || 'bg-base-200 text-base-content'}`}>
                           {order.status}
                         </span>
                       </td>
-                      <td>
+                      <td className="px-5 py-4">
                         <select
                           value={order.status}
                           onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                          className="select select-bordered select-xs"
+                          className="border border-base-300 focus:border-primary rounded-lg px-2 py-1.5 text-xs bg-base-100 outline-none focus:ring-1 focus:ring-primary/20 cursor-pointer"
                         >
                           {STATUS_ORDER.map((s, idx) => (
-                            <option key={s} value={s} disabled={idx < currentIdx}>
-                              {s}
-                            </option>
+                            <option key={s} value={s} disabled={idx < currentIdx}>{s}</option>
                           ))}
                         </select>
                       </td>
