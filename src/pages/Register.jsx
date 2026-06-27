@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { Eye, EyeOff, BookOpen, Library, CheckCircle, Upload, Link2 } from 'lucide-react'
+import { Eye, EyeOff, BookOpen, Library, CheckCircle, Upload, Link2, ArrowLeft } from 'lucide-react'
+import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { useAuth } from '../contexts/AuthContext'
 import { uploadImage } from '../utils/uploadImage'
@@ -15,6 +16,19 @@ const GoogleIcon = () => (
   </svg>
 )
 
+const getStrength = (pw) => {
+  if (!pw) return 0
+  let score = 0
+  if (pw.length >= 6) score++
+  if (pw.length >= 10) score++
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++
+  if (/[0-9!@#$%^&*]/.test(pw)) score++
+  return score
+}
+
+const strengthLabel = ['', 'Weak', 'Fair', 'Good', 'Strong']
+const strengthColor = ['', 'bg-error', 'bg-warning', 'bg-info', 'bg-success']
+
 const Register = () => {
   const { register: registerUser, googleLogin } = useAuth()
   const navigate = useNavigate()
@@ -22,21 +36,16 @@ const Register = () => {
   const [role, setRole] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
-  const [photoTab, setPhotoTab] = useState('url')
+  const [photoTab, setPhotoTab] = useState('upload')
   const [photoURL, setPhotoURL] = useState('')
   const [uploading, setUploading] = useState(false)
   const [photoPreview, setPhotoPreview] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState(null)
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm()
-
-  const password = watch('password')
+  const { register, handleSubmit, watch, formState: { errors } } = useForm()
+  const password = watch('password', '')
+  const strength = getStrength(password)
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0]
@@ -46,16 +55,12 @@ const Register = () => {
       const url = await uploadImage(file)
       setPhotoURL(url)
       setPhotoPreview(url)
-      toast.success('Image uploaded!')
-    } catch {
-      toast.error('Image upload failed')
-    } finally {
-      setUploading(false)
-    }
+      toast.success('Photo uploaded!')
+    } catch { toast.error('Upload failed') }
+    finally { setUploading(false) }
   }
 
   const onStep1Submit = (data) => {
-    if (!role && step === 2) return
     setFormData({ ...data, photoURL: photoTab === 'url' ? data.photoURL : photoURL })
     setStep(2)
   }
@@ -82,87 +87,94 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-base-200 px-4 py-12">
-      <div className="card bg-base-100 shadow-xl w-full max-w-md rounded-3xl p-8">
+      <motion.div
+        key={step}
+        initial={{ opacity: 0, x: step === 2 ? 30 : -30 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.35 }}
+        className="w-full max-w-lg bg-base-100 rounded-3xl shadow-xl p-8 border border-base-200"
+      >
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-3">
-          <BookOpen className="text-primary" size={26} />
-          <span className="font-display text-2xl font-bold text-primary">BiblioDrop</span>
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <BookOpen className="text-primary" size={24} strokeWidth={2.5} />
+          <span className="font-display text-xl font-bold text-primary">BiblioDrop</span>
         </div>
 
-        {/* Step indicator */}
-        <div className="flex items-center justify-center gap-2 mb-6">
+        {/* Progress */}
+        <div className="flex items-center gap-2 mb-7">
           {[1, 2].map((s) => (
-            <div key={s} className="flex items-center gap-2">
-              <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                  step >= s ? 'bg-primary text-primary-content' : 'bg-base-300 text-base-content/40'
-                }`}
-              >
-                {s}
-              </div>
-              {s === 1 && <div className={`h-0.5 w-12 ${step > 1 ? 'bg-primary' : 'bg-base-300'} transition-colors`} />}
+            <div key={s} className="flex items-center gap-2 flex-1">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all shrink-0 ${step >= s ? 'bg-primary text-primary-content' : 'bg-base-300 text-base-content/40'}`}>{s}</div>
+              {s === 1 && <div className={`flex-1 h-1 rounded-full transition-all ${step > 1 ? 'bg-primary' : 'bg-base-300'}`} />}
             </div>
           ))}
         </div>
 
-        {step === 1 && (
+        {step === 1 ? (
           <>
-            <h2 className="text-2xl font-display font-bold text-center mb-1">Create Account</h2>
-            <p className="text-center text-base-content/50 text-sm mb-6">Step 1 of 2 — Account Details</p>
+            <h2 className="font-display text-2xl text-base-content mb-1">Create Account</h2>
+            <p className="text-base-content/50 text-sm mb-6">Step 1 of 2 — Account Details</p>
 
-            <form onSubmit={handleSubmit(onStep1Submit)} className="flex flex-col gap-4">
+            <form onSubmit={handleSubmit(onStep1Submit)} className="space-y-4">
               <div>
-                <label className="label pb-1"><span className="label-text text-sm font-medium">Full Name</span></label>
+                <label className="text-sm font-medium text-base-content/70 block mb-1.5">Full Name</label>
                 <input
-                  type="text"
+                  className={`w-full border ${errors.name ? 'border-error' : 'border-base-300'} focus:border-primary rounded-xl px-4 py-3 text-sm bg-base-100 outline-none transition-colors focus:ring-2 focus:ring-primary/20`}
                   placeholder="Your full name"
-                  className={`input input-bordered w-full ${errors.name ? 'input-error' : ''}`}
-                  {...register('name', { required: 'Name is required' })}
+                  {...register('name', { required: 'Name required' })}
                 />
                 {errors.name && <p className="text-error text-xs mt-1">{errors.name.message}</p>}
               </div>
 
               <div>
-                <label className="label pb-1"><span className="label-text text-sm font-medium">Email</span></label>
+                <label className="text-sm font-medium text-base-content/70 block mb-1.5">Email</label>
                 <input
                   type="email"
+                  className={`w-full border ${errors.email ? 'border-error' : 'border-base-300'} focus:border-primary rounded-xl px-4 py-3 text-sm bg-base-100 outline-none transition-colors focus:ring-2 focus:ring-primary/20`}
                   placeholder="you@example.com"
-                  className={`input input-bordered w-full ${errors.email ? 'input-error' : ''}`}
-                  {...register('email', { required: 'Email is required', pattern: { value: /^\S+@\S+$/i, message: 'Invalid email' } })}
+                  {...register('email', { required: 'Email required', pattern: { value: /^\S+@\S+$/i, message: 'Invalid email' } })}
                 />
                 {errors.email && <p className="text-error text-xs mt-1">{errors.email.message}</p>}
               </div>
 
               <div>
-                <label className="label pb-1"><span className="label-text text-sm font-medium">Password</span></label>
+                <label className="text-sm font-medium text-base-content/70 block mb-1.5">Password</label>
                 <div className="relative">
                   <input
                     type={showPw ? 'text' : 'password'}
+                    className={`w-full border ${errors.password ? 'border-error' : 'border-base-300'} focus:border-primary rounded-xl px-4 pr-11 py-3 text-sm bg-base-100 outline-none transition-colors focus:ring-2 focus:ring-primary/20`}
                     placeholder="Min 6 characters"
-                    className={`input input-bordered w-full pr-10 ${errors.password ? 'input-error' : ''}`}
-                    {...register('password', { required: 'Password is required', minLength: { value: 6, message: 'Min 6 characters' } })}
+                    {...register('password', { required: 'Password required', minLength: { value: 6, message: 'Min 6 chars' } })}
                   />
-                  <button type="button" onClick={() => setShowPw((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40">
-                    {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                  <button type="button" onClick={() => setShowPw((v) => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content cursor-pointer">
+                    {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
                 </div>
+                {/* Strength bar */}
+                {password && (
+                  <div className="mt-2">
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className={`h-1 flex-1 rounded-full transition-all ${i <= strength ? strengthColor[strength] : 'bg-base-300'}`} />
+                      ))}
+                    </div>
+                    <p className={`text-xs mt-1 ${strengthColor[strength].replace('bg-', 'text-')}`}>{strengthLabel[strength]}</p>
+                  </div>
+                )}
                 {errors.password && <p className="text-error text-xs mt-1">{errors.password.message}</p>}
               </div>
 
               <div>
-                <label className="label pb-1"><span className="label-text text-sm font-medium">Confirm Password</span></label>
+                <label className="text-sm font-medium text-base-content/70 block mb-1.5">Confirm Password</label>
                 <div className="relative">
                   <input
                     type={showConfirm ? 'text' : 'password'}
-                    placeholder="Repeat your password"
-                    className={`input input-bordered w-full pr-10 ${errors.confirmPassword ? 'input-error' : ''}`}
-                    {...register('confirmPassword', {
-                      required: 'Please confirm your password',
-                      validate: (v) => v === password || 'Passwords do not match',
-                    })}
+                    className={`w-full border ${errors.confirmPassword ? 'border-error' : 'border-base-300'} focus:border-primary rounded-xl px-4 pr-11 py-3 text-sm bg-base-100 outline-none transition-colors focus:ring-2 focus:ring-primary/20`}
+                    placeholder="Repeat password"
+                    {...register('confirmPassword', { required: 'Required', validate: (v) => v === password || 'Passwords do not match' })}
                   />
-                  <button type="button" onClick={() => setShowConfirm((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40">
-                    {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                  <button type="button" onClick={() => setShowConfirm((v) => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content cursor-pointer">
+                    {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
                 </div>
                 {errors.confirmPassword && <p className="text-error text-xs mt-1">{errors.confirmPassword.message}</p>}
@@ -170,110 +182,104 @@ const Register = () => {
 
               {/* Photo */}
               <div>
-                <label className="label pb-1"><span className="label-text text-sm font-medium">Profile Photo</span></label>
+                <label className="text-sm font-medium text-base-content/70 block mb-1.5">Profile Photo</label>
                 <div className="tabs tabs-bordered mb-3">
-                  <button type="button" onClick={() => setPhotoTab('url')} className={`tab tab-sm gap-1 ${photoTab === 'url' ? 'tab-active' : ''}`}>
-                    <Link2 size={13} /> URL
-                  </button>
                   <button type="button" onClick={() => setPhotoTab('upload')} className={`tab tab-sm gap-1 ${photoTab === 'upload' ? 'tab-active' : ''}`}>
-                    <Upload size={13} /> Upload
+                    <Upload size={12} /> Upload
+                  </button>
+                  <button type="button" onClick={() => setPhotoTab('url')} className={`tab tab-sm gap-1 ${photoTab === 'url' ? 'tab-active' : ''}`}>
+                    <Link2 size={12} /> URL
                   </button>
                 </div>
-                {photoTab === 'url' ? (
+                {photoTab === 'upload' ? (
+                  <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-5 cursor-pointer transition-colors ${uploading ? 'border-primary bg-primary/5' : 'border-base-300 hover:border-primary hover:bg-base-200'}`}>
+                    <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                    {photoPreview ? (
+                      <img src={photoPreview} alt="Preview" className="w-16 h-16 rounded-full object-cover border-2 border-primary" />
+                    ) : uploading ? (
+                      <span className="loading loading-spinner loading-md text-primary" />
+                    ) : (
+                      <>
+                        <Upload size={24} className="text-base-content/30 mb-2" />
+                        <span className="text-xs text-base-content/40">Click to upload or drag & drop</span>
+                      </>
+                    )}
+                  </label>
+                ) : (
                   <input
                     type="url"
                     placeholder="https://your-photo-url.com/image.jpg"
-                    className="input input-bordered w-full"
+                    className="w-full border border-base-300 focus:border-primary rounded-xl px-4 py-3 text-sm bg-base-100 outline-none transition-colors focus:ring-2 focus:ring-primary/20"
                     {...register('photoURL')}
                   />
-                ) : (
-                  <div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      className="file-input file-input-bordered w-full file-input-sm"
-                    />
-                    {uploading && <p className="text-xs text-primary mt-1 flex items-center gap-1"><span className="loading loading-spinner loading-xs" /> Uploading...</p>}
-                    {photoPreview && (
-                      <img src={photoPreview} alt="Preview" className="w-16 h-16 rounded-full object-cover mt-2 border-2 border-primary" />
-                    )}
-                  </div>
                 )}
               </div>
 
-              <button type="submit" className="btn btn-primary w-full rounded-xl mt-2">
-                Next Step
+              <button type="submit" className="w-full py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-semibold hover:opacity-90 hover:-translate-y-0.5 transition-all shadow-lg shadow-primary/25 cursor-pointer mt-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2">
+                Continue
               </button>
             </form>
 
-            <div className="divider my-4 text-base-content/40 text-sm">or</div>
-            <button onClick={() => { googleLogin(); setStep(2) }} className="btn btn-outline w-full rounded-xl gap-2">
+            <div className="flex items-center gap-3 my-4">
+              <div className="flex-1 h-px bg-base-300" />
+              <span className="text-xs text-base-content/40">or</span>
+              <div className="flex-1 h-px bg-base-300" />
+            </div>
+            <button onClick={() => { googleLogin(); setStep(2) }} className="w-full py-3 rounded-xl border border-base-300 hover:border-primary/40 hover:bg-base-200 transition-all flex items-center justify-center gap-3 text-sm font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50">
               <GoogleIcon /> Continue with Google
             </button>
 
-            <p className="text-center text-sm text-base-content/60 mt-5">
+            <p className="text-center text-sm text-base-content/50 mt-5">
               Already have an account?{' '}
-              <Link to="/login" className="link link-primary font-medium">Login</Link>
+              <Link to="/login" className="text-primary font-medium hover:underline cursor-pointer">Sign in</Link>
             </p>
           </>
-        )}
-
-        {step === 2 && (
+        ) : (
           <>
-            <h2 className="text-2xl font-display font-bold text-center mb-1">Choose Your Role</h2>
-            <p className="text-center text-base-content/50 text-sm mb-6">How will you use BiblioDrop?</p>
+            <h2 className="font-display text-2xl text-base-content mb-1">Choose Your Role</h2>
+            <p className="text-base-content/50 text-sm mb-6">How will you use BiblioDrop?</p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-7">
               {[
-                {
-                  key: 'user',
-                  icon: <BookOpen size={32} className="text-primary" />,
-                  title: "I'm a Reader",
-                  desc: 'Browse and request books delivered to your door',
-                },
-                {
-                  key: 'librarian',
-                  icon: <Library size={32} className="text-secondary" />,
-                  title: "I'm a Librarian",
-                  desc: 'List your books and earn from deliveries',
-                },
-              ].map(({ key, icon, title, desc }) => (
+                { key: 'user', icon: <BookOpen size={28} className="text-primary" />, bg: 'bg-primary/10', title: "I'm a Reader", desc: 'Browse and request books delivered to your door' },
+                { key: 'librarian', icon: <Library size={28} className="text-amber-500" />, bg: 'bg-amber-500/10', title: "I'm a Librarian", desc: 'List your books and earn from deliveries' },
+              ].map(({ key, icon, bg, title, desc }) => (
                 <button
                   key={key}
                   type="button"
                   onClick={() => setRole(key)}
-                  className={`card p-5 rounded-2xl border-2 text-left transition-all ${
-                    role === key
-                      ? 'border-primary bg-primary/5'
-                      : 'border-base-300 bg-base-200 hover:border-primary/40'
-                  }`}
+                  className={`relative p-5 rounded-2xl border-2 text-left transition-all cursor-pointer focus:outline-none ${role === key ? 'border-primary bg-primary/5' : 'border-base-200 hover:border-primary/30 bg-base-200'}`}
                 >
-                  <div className="mb-3 flex items-center justify-between">
-                    {icon}
-                    {role === key && <CheckCircle size={20} className="text-primary" />}
-                  </div>
-                  <p className="font-semibold text-sm">{title}</p>
-                  <p className="text-xs text-base-content/60 mt-1">{desc}</p>
+                  {role === key && (
+                    <span className="absolute top-3 right-3 text-primary">
+                      <CheckCircle size={18} fill="currentColor" />
+                    </span>
+                  )}
+                  <div className={`w-12 h-12 ${bg} rounded-xl flex items-center justify-center mb-3`}>{icon}</div>
+                  <p className="font-semibold text-sm text-base-content">{title}</p>
+                  <p className="text-xs text-base-content/50 mt-1 leading-relaxed">{desc}</p>
                 </button>
               ))}
             </div>
 
             <div className="flex gap-3">
-              <button onClick={() => setStep(1)} className="btn btn-ghost flex-1 rounded-xl">
-                Back
+              <button
+                onClick={() => setStep(1)}
+                className="flex items-center gap-1.5 border border-base-300 text-base-content/70 px-5 py-3 rounded-xl text-sm hover:border-primary/40 transition-colors cursor-pointer focus:outline-none"
+              >
+                <ArrowLeft size={14} /> Back
               </button>
               <button
                 onClick={handleCreateAccount}
                 disabled={submitting || !role}
-                className="btn btn-primary flex-1 rounded-xl"
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-semibold hover:opacity-90 hover:-translate-y-0.5 transition-all shadow-lg shadow-primary/25 cursor-pointer disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2"
               >
                 {submitting ? <span className="loading loading-spinner loading-sm" /> : 'Create Account'}
               </button>
             </div>
           </>
         )}
-      </div>
+      </motion.div>
     </div>
   )
 }
