@@ -1,0 +1,136 @@
+import { useState } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { Eye, EyeOff, BookOpen } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { useAuth } from '../contexts/AuthContext'
+
+const GoogleIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24">
+    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+  </svg>
+)
+
+const Login = () => {
+  const { login, googleLogin } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [showPw, setShowPw] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+
+  const { register, handleSubmit, formState: { errors } } = useForm()
+
+  const from = location.state?.from?.pathname || '/'
+
+  const onSubmit = async (data) => {
+    setLoading(true)
+    try {
+      await login(data.email, data.password)
+      toast.success('Welcome back!')
+      navigate(from, { replace: true })
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Login failed. Check your credentials.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGoogle = async () => {
+    setGoogleLoading(true)
+    try {
+      await googleLogin()
+    } catch {
+      toast.error('Google login failed')
+      setGoogleLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-base-200 px-4 py-12">
+      <div className="card bg-base-100 shadow-xl w-full max-w-md rounded-3xl p-8">
+        {/* Logo */}
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <BookOpen className="text-primary" size={28} />
+          <span className="font-display text-2xl font-bold text-primary">BiblioDrop</span>
+        </div>
+
+        <h2 className="text-2xl font-display font-bold text-center text-base-content mb-1">
+          Welcome Back
+        </h2>
+        <p className="text-center text-base-content/50 text-sm mb-7">
+          Sign in to continue your reading journey
+        </p>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <div>
+            <label className="label pb-1"><span className="label-text text-sm font-medium">Email</span></label>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              className={`input input-bordered w-full ${errors.email ? 'input-error' : ''}`}
+              {...register('email', { required: 'Email is required', pattern: { value: /^\S+@\S+$/i, message: 'Invalid email' } })}
+            />
+            {errors.email && <p className="text-error text-xs mt-1">{errors.email.message}</p>}
+          </div>
+
+          <div>
+            <label className="label pb-1">
+              <span className="label-text text-sm font-medium">Password</span>
+              <span className="label-text-alt">
+                <button type="button" className="link link-primary text-xs">Forgot Password?</button>
+              </span>
+            </label>
+            <div className="relative">
+              <input
+                type={showPw ? 'text' : 'password'}
+                placeholder="••••••••"
+                className={`input input-bordered w-full pr-10 ${errors.password ? 'input-error' : ''}`}
+                {...register('password', { required: 'Password is required' })}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content"
+              >
+                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            {errors.password && <p className="text-error text-xs mt-1">{errors.password.message}</p>}
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn btn-primary w-full rounded-xl mt-2"
+          >
+            {loading ? <span className="loading loading-spinner loading-sm" /> : 'Login'}
+          </button>
+        </form>
+
+        <div className="divider my-5 text-base-content/40 text-sm">or continue with</div>
+
+        <button
+          onClick={handleGoogle}
+          disabled={googleLoading}
+          className="btn btn-outline w-full rounded-xl gap-2"
+        >
+          {googleLoading ? <span className="loading loading-spinner loading-sm" /> : <GoogleIcon />}
+          Continue with Google
+        </button>
+
+        <p className="text-center text-sm text-base-content/60 mt-6">
+          Don&apos;t have an account?{' '}
+          <Link to="/register" className="link link-primary font-medium">
+            Register
+          </Link>
+        </p>
+      </div>
+    </div>
+  )
+}
+
+export default Login
