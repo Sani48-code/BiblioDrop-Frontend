@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BookCopy, DollarSign, Clock } from 'lucide-react'
+import { BookCopy, Wallet, Clock } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts'
@@ -8,17 +8,27 @@ import toast from 'react-hot-toast'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-const StatCard = ({ icon: Icon, value, label, color }) => (
-  <div className="card bg-base-200 rounded-2xl p-6 flex items-center gap-4 shadow-sm">
-    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
-      <Icon size={22} className="text-white" />
+const StatCard = ({ icon: Icon, value, label, iconBg }) => (
+  <div className="bg-base-100 border border-base-200 rounded-2xl p-5 flex flex-col gap-3">
+    <div className="flex items-center justify-between">
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBg}`}>
+        <Icon size={19} />
+      </div>
+      <span className="text-xs text-base-content/40 uppercase tracking-wider">{label}</span>
     </div>
-    <div>
-      <p className="text-2xl font-bold">{value}</p>
-      <p className="text-sm text-base-content/60">{label}</p>
-    </div>
+    <p className="font-display text-3xl font-bold text-base-content">{value}</p>
   </div>
 )
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="bg-base-100 border border-base-200 shadow-lg rounded-xl p-3 text-sm">
+      <p className="font-semibold mb-1">{label}</p>
+      <p className="text-success">৳{payload[0].value}</p>
+    </div>
+  )
+}
 
 const LibrarianOverview = () => {
   const axiosSecure = useAxiosSecure()
@@ -59,48 +69,52 @@ const LibrarianOverview = () => {
   })
   const topBooks = Object.values(bookRequestMap).sort((a, b) => b.count - a.count).slice(0, 3)
 
-  if (loading) return <div className="loading loading-spinner loading-lg text-primary block mx-auto mt-20" />
+  if (loading) return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-28 bg-base-200 rounded-2xl animate-pulse" />)}
+      </div>
+    </div>
+  )
 
   return (
     <div>
-      <h1 className="text-2xl font-display font-bold mb-6">Librarian Dashboard</h1>
+      <h1 className="font-display text-2xl text-base-content mb-6">Librarian Dashboard</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <StatCard icon={BookCopy} value={books.length} label="Books Listed" color="bg-primary" />
-        <StatCard icon={DollarSign} value={`$${totalEarnings.toFixed(2)}`} label="Total Earnings" color="bg-success" />
-        <StatCard icon={Clock} value={pendingCount} label="Pending Requests" color="bg-warning" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <StatCard icon={BookCopy} value={books.length} label="Books Listed" iconBg="bg-primary/10 text-primary" />
+        <StatCard icon={Wallet} value={`৳${totalEarnings.toFixed(0)}`} label="Total Earnings" iconBg="bg-success/10 text-success" />
+        <StatCard icon={Clock} value={pendingCount} label="Pending Requests" iconBg="bg-warning/10 text-warning" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card bg-base-200 rounded-2xl p-5 shadow-sm">
-          <h3 className="font-semibold mb-4 text-sm">Monthly Earnings (last 6 months)</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={monthlyEarnings}>
-              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip formatter={(v) => [`$${v}`, 'Earned']} />
-              <Bar dataKey="amount" fill="#10B981" radius={[4, 4, 0, 0]} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="bg-base-100 border border-base-200 rounded-2xl p-5">
+          <h3 className="font-semibold text-sm text-base-content mb-4">Monthly Earnings (last 6 months)</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={monthlyEarnings} barSize={28}>
+              <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar dataKey="amount" fill="#34D399" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="card bg-base-200 rounded-2xl p-5 shadow-sm">
-          <h3 className="font-semibold mb-4 text-sm">Top Requested Books</h3>
+        <div className="bg-base-100 border border-base-200 rounded-2xl p-5">
+          <h3 className="font-semibold text-sm text-base-content mb-4">Top Requested Books</h3>
           {topBooks.length === 0 ? (
-            <p className="text-base-content/40 text-sm text-center py-8">No requests yet</p>
+            <div className="flex items-center justify-center h-52 text-base-content/40 text-sm">No requests yet</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="table table-sm">
-                <thead><tr><th>Title</th><th>Requests</th></tr></thead>
-                <tbody>
-                  {topBooks.map((b, i) => (
-                    <tr key={i}>
-                      <td className="truncate max-w-[200px] text-sm">{b.title}</td>
-                      <td><span className="badge badge-primary badge-sm">{b.count}</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-3 mt-2">
+              {topBooks.map((b, i) => (
+                <div key={i} className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-6 h-6 rounded-full bg-base-200 flex items-center justify-center text-xs font-bold text-base-content/50 shrink-0">{i + 1}</span>
+                    <p className="text-sm text-base-content truncate">{b.title}</p>
+                  </div>
+                  <span className="shrink-0 text-xs font-semibold bg-primary/10 text-primary px-2 py-1 rounded-full">{b.count} req</span>
+                </div>
+              ))}
             </div>
           )}
         </div>
