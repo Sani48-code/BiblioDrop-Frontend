@@ -43,84 +43,91 @@ const BookApprovalQueue = () => {
     setDeleteId(null)
   }
 
-  if (loading) return <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-16 bg-base-200 rounded-xl animate-pulse" />)}</div>
+  if (loading) return (
+    <div className="space-y-4">
+      {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-32 bg-base-200 rounded-2xl animate-pulse" />)}
+    </div>
+  )
 
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
-        <h1 className="text-2xl font-display font-bold">Book Approval Queue</h1>
-        <span className="badge badge-warning">{books.length} pending</span>
+        <h1 className="font-display text-2xl text-base-content">Book Approval Queue</h1>
+        <span className="text-xs font-semibold bg-warning/10 text-warning px-2.5 py-1 rounded-full">{books.length} pending</span>
       </div>
 
       {books.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-base-content/40 gap-4">
-          <ClipboardCheck size={48} />
-          <p className="text-lg font-semibold">No books pending approval</p>
-          <p className="text-sm">All caught up!</p>
+        <div className="bg-base-100 border border-base-200 rounded-2xl p-16 text-center">
+          <ClipboardCheck size={40} className="text-base-content/20 mx-auto mb-3" />
+          <p className="font-medium text-base-content/50 mb-1">All caught up!</p>
+          <p className="text-sm text-base-content/40">No books pending approval.</p>
         </div>
       ) : (
-        <div className="card bg-base-200 rounded-2xl shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Cover</th>
-                  <th>Title</th>
-                  <th>Author</th>
-                  <th>Category</th>
-                  <th>Librarian</th>
-                  <th>Submitted</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {books.map((book) => (
-                  <tr key={book._id} className="hover">
-                    <td>
-                      <img src={book.imageURL || 'https://placehold.co/40x50/e2e8f0/1e293b?text=📚'} alt={book.title} className="w-10 h-12 object-cover rounded-lg" />
-                    </td>
-                    <td className="font-medium text-sm max-w-[160px] truncate">{book.title}</td>
-                    <td className="text-sm">{book.author}</td>
-                    <td><span className="badge badge-sm badge-secondary">{book.category}</span></td>
-                    <td className="text-xs text-base-content/60 max-w-[140px] truncate">{book.librarianEmail || '—'}</td>
-                    <td className="text-xs text-base-content/60">
-                      {book.createdAt ? new Date(book.createdAt).toLocaleDateString() : '—'}
-                    </td>
-                    <td>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleApprove(book._id)}
-                          disabled={actionLoading === book._id}
-                          className="btn btn-success btn-xs gap-1"
-                        >
-                          {actionLoading === book._id ? <span className="loading loading-spinner loading-xs" /> : <CheckCircle size={12} />}
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => setDeleteId(book._id)}
-                          className="btn btn-error btn-xs gap-1"
-                        >
-                          <Trash2 size={12} /> Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="space-y-4">
+          {books.map((book) => (
+            <div key={book._id} className="bg-base-100 border border-base-200 rounded-2xl p-5 flex items-start gap-5 hover:border-primary/30 transition-colors">
+              {/* Cover */}
+              <div className="w-16 h-22 rounded-xl overflow-hidden bg-base-200 shrink-0" style={{ aspectRatio: '2/3' }}>
+                {book.imageURL ? (
+                  <img src={book.imageURL} alt={book.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20" />
+                )}
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-base-content truncate">{book.title}</h3>
+                    <p className="text-sm text-base-content/60 mt-0.5">{book.author}</p>
+                  </div>
+                  <span className="shrink-0 text-xs bg-base-200 text-base-content/60 px-2.5 py-1 rounded-full">{book.category}</span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-base-content/40">
+                  <span>Librarian: <span className="text-base-content/60">{book.librarianEmail || '—'}</span></span>
+                  <span>Submitted: <span className="text-base-content/60">{book.createdAt ? new Date(book.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</span></span>
+                </div>
+
+                {book.description && (
+                  <p className="text-xs text-base-content/50 mt-2 line-clamp-2 leading-relaxed">{book.description}</p>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-col gap-2 shrink-0">
+                <button
+                  onClick={() => handleApprove(book._id)}
+                  disabled={actionLoading === book._id}
+                  className="flex items-center gap-1.5 bg-success/10 text-success hover:bg-success hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  {actionLoading === book._id
+                    ? <span className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                    : <CheckCircle size={14} />
+                  }
+                  Approve
+                </button>
+                <button
+                  onClick={() => setDeleteId(book._id)}
+                  className="flex items-center gap-1.5 bg-error/10 text-error hover:bg-error hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors cursor-pointer"
+                >
+                  <Trash2 size={14} /> Reject
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Delete modal */}
       {deleteId && (
         <div className="modal modal-open">
-          <div className="modal-box rounded-2xl">
-            <h3 className="font-bold text-lg mb-2">Delete Book</h3>
-            <p className="text-base-content/60 mb-6">Are you sure you want to permanently delete this book?</p>
+          <div className="modal-box rounded-2xl bg-base-100">
+            <h3 className="font-display text-lg text-base-content mb-2">Reject Book</h3>
+            <p className="text-base-content/60 text-sm mb-6">Are you sure you want to permanently delete this book?</p>
             <div className="flex justify-end gap-3">
-              <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="btn btn-error" onClick={handleDelete}>Delete</button>
+              <button className="border border-base-300 text-base-content/60 px-5 py-2 rounded-xl text-sm cursor-pointer" onClick={() => setDeleteId(null)}>Cancel</button>
+              <button className="bg-error text-white px-5 py-2 rounded-xl text-sm cursor-pointer hover:opacity-90" onClick={handleDelete}>Delete</button>
             </div>
           </div>
           <div className="modal-backdrop" onClick={() => setDeleteId(null)} />
