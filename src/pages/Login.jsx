@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { Eye, EyeOff, BookOpen } from 'lucide-react'
+import { Eye, EyeOff, BookOpen, Mail, Lock } from 'lucide-react'
+import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -23,7 +24,6 @@ const Login = () => {
   const [googleLoading, setGoogleLoading] = useState(false)
 
   const { register, handleSubmit, formState: { errors } } = useForm()
-
   const from = location.state?.from?.pathname || '/'
 
   const onSubmit = async (data) => {
@@ -33,7 +33,7 @@ const Login = () => {
       toast.success('Welcome back!')
       navigate(from, { replace: true })
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Login failed. Check your credentials.')
+      toast.error(err.response?.data?.message || 'Invalid credentials')
     } finally {
       setLoading(false)
     }
@@ -41,93 +41,122 @@ const Login = () => {
 
   const handleGoogle = async () => {
     setGoogleLoading(true)
-    try {
-      await googleLogin()
-    } catch {
-      toast.error('Google login failed')
-      setGoogleLoading(false)
-    }
+    try { await googleLogin() }
+    catch { toast.error('Google login failed'); setGoogleLoading(false) }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-base-200 px-4 py-12">
-      <div className="card bg-base-100 shadow-xl w-full max-w-md rounded-3xl p-8">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <BookOpen className="text-primary" size={28} />
-          <span className="font-display text-2xl font-bold text-primary">BiblioDrop</span>
-        </div>
+    <div className="min-h-screen flex">
+      {/* Left — Decorative */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary to-secondary relative overflow-hidden flex-col items-center justify-center p-12">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="relative z-10 text-center"
+        >
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <BookOpen size={32} className="text-white" strokeWidth={2.5} />
+            <span className="font-display text-3xl font-bold text-white">BiblioDrop</span>
+          </div>
+          <p className="font-display text-3xl text-white/90 italic leading-relaxed max-w-sm">
+            "Every book is a new journey. Start yours today."
+          </p>
+          <div className="mt-8 flex justify-center">
+            <motion.div animate={{ y: [0, -12, 0] }} transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}>
+              <BookOpen size={72} className="text-white/20" />
+            </motion.div>
+          </div>
+        </motion.div>
+        <div className="absolute bottom-8 text-white/40 text-xs">© 2025 BiblioDrop</div>
+      </div>
 
-        <h2 className="text-2xl font-display font-bold text-center text-base-content mb-1">
-          Welcome Back
-        </h2>
-        <p className="text-center text-base-content/50 text-sm mb-7">
-          Sign in to continue your reading journey
-        </p>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-          <div>
-            <label className="label pb-1"><span className="label-text text-sm font-medium">Email</span></label>
-            <input
-              type="email"
-              placeholder="you@example.com"
-              className={`input input-bordered w-full ${errors.email ? 'input-error' : ''}`}
-              {...register('email', { required: 'Email is required', pattern: { value: /^\S+@\S+$/i, message: 'Invalid email' } })}
-            />
-            {errors.email && <p className="text-error text-xs mt-1">{errors.email.message}</p>}
+      {/* Right — Form */}
+      <div className="flex-1 flex items-center justify-center px-4 py-12 bg-base-100">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md"
+        >
+          {/* Mobile logo */}
+          <div className="flex items-center gap-2 mb-8 lg:hidden justify-center">
+            <BookOpen className="text-primary" size={24} strokeWidth={2.5} />
+            <span className="font-display text-xl font-bold text-primary">BiblioDrop</span>
           </div>
 
-          <div>
-            <label className="label pb-1">
-              <span className="label-text text-sm font-medium">Password</span>
-              <span className="label-text-alt">
-                <button type="button" className="link link-primary text-xs">Forgot Password?</button>
-              </span>
-            </label>
-            <div className="relative">
-              <input
-                type={showPw ? 'text' : 'password'}
-                placeholder="••••••••"
-                className={`input input-bordered w-full pr-10 ${errors.password ? 'input-error' : ''}`}
-                {...register('password', { required: 'Password is required' })}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content"
-              >
-                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
+          <h2 className="font-display text-3xl text-base-content mb-1">Welcome back</h2>
+          <p className="text-base-content/50 text-sm mb-8">Sign in to continue your reading journey</p>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-base-content/70 block mb-1.5">Email</label>
+              <div className="relative">
+                <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base-content/40" />
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  className={`w-full border ${errors.email ? 'border-error' : 'border-base-300'} focus:border-primary rounded-xl pl-10 pr-4 py-3 text-sm bg-base-100 outline-none transition-colors focus:ring-2 focus:ring-primary/20`}
+                  {...register('email', { required: 'Email required', pattern: { value: /^\S+@\S+$/i, message: 'Invalid email' } })}
+                />
+              </div>
+              {errors.email && <p className="text-error text-xs mt-1">{errors.email.message}</p>}
             </div>
-            {errors.password && <p className="text-error text-xs mt-1">{errors.password.message}</p>}
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-medium text-base-content/70">Password</label>
+                <button type="button" className="text-xs text-primary hover:underline cursor-pointer">Forgot password?</button>
+              </div>
+              <div className="relative">
+                <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base-content/40" />
+                <input
+                  type={showPw ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  className={`w-full border ${errors.password ? 'border-error' : 'border-base-300'} focus:border-primary rounded-xl pl-10 pr-11 py-3 text-sm bg-base-100 outline-none transition-colors focus:ring-2 focus:ring-primary/20`}
+                  {...register('password', { required: 'Password required' })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw((v) => !v)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content cursor-pointer"
+                >
+                  {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+              {errors.password && <p className="text-error text-xs mt-1">{errors.password.message}</p>}
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-semibold hover:opacity-90 hover:-translate-y-0.5 active:translate-y-0 transition-all shadow-lg shadow-primary/25 cursor-pointer disabled:opacity-60 disabled:pointer-events-none flex items-center justify-center gap-2 mt-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2"
+            >
+              {loading ? <span className="loading loading-spinner loading-sm" /> : 'Sign In'}
+            </button>
+          </form>
+
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px bg-base-300" />
+            <span className="text-xs text-base-content/40">or</span>
+            <div className="flex-1 h-px bg-base-300" />
           </div>
 
           <button
-            type="submit"
-            disabled={loading}
-            className="btn btn-primary w-full rounded-xl mt-2"
+            onClick={handleGoogle}
+            disabled={googleLoading}
+            className="w-full py-3 rounded-xl border border-base-300 bg-base-100 hover:border-primary/40 hover:bg-base-200 transition-all flex items-center justify-center gap-3 text-sm font-medium cursor-pointer disabled:opacity-60 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-primary/50"
           >
-            {loading ? <span className="loading loading-spinner loading-sm" /> : 'Login'}
+            {googleLoading ? <span className="loading loading-spinner loading-xs" /> : <GoogleIcon />}
+            Continue with Google
           </button>
-        </form>
 
-        <div className="divider my-5 text-base-content/40 text-sm">or continue with</div>
-
-        <button
-          onClick={handleGoogle}
-          disabled={googleLoading}
-          className="btn btn-outline w-full rounded-xl gap-2"
-        >
-          {googleLoading ? <span className="loading loading-spinner loading-sm" /> : <GoogleIcon />}
-          Continue with Google
-        </button>
-
-        <p className="text-center text-sm text-base-content/60 mt-6">
-          Don&apos;t have an account?{' '}
-          <Link to="/register" className="link link-primary font-medium">
-            Register
-          </Link>
-        </p>
+          <p className="text-center text-sm text-base-content/50 mt-6">
+            Don&apos;t have an account?{' '}
+            <Link to="/register" className="text-primary font-medium hover:underline cursor-pointer">Sign up</Link>
+          </p>
+        </motion.div>
       </div>
     </div>
   )
