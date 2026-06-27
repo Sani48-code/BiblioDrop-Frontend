@@ -1,17 +1,65 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'Inter', sans-serif;
+@layer base {
+  * {
+    transition: background-color 0.3s ease, border-color 0.2s ease;
+  }
+  h1, h2, h3, .font-display {
+    font-family: 'Playfair Display', serif;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+  }
+  ::selection {
+    background: #4F46E5;
+    color: white;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #4F46E5;
+    border-radius: 3px;
+  }
 }
 
-h1, h2, h3, .font-display {
-  font-family: 'Playfair Display', serif;
-}
-
-* {
-  transition: background-color 0.3s ease, color 0.2s ease;
+@layer components {
+  .section-padding {
+    @apply px-4 sm:px-6 lg:px-8 py-16 lg:py-24;
+  }
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  .btn-primary-custom {
+    @apply bg-primary text-primary-content px-6 py-3 rounded-xl font-medium
+           hover:opacity-90 hover:-translate-y-0.5 active:translate-y-0
+           transition-all duration-200 shadow-lg shadow-primary/25 cursor-pointer;
+  }
+  .card-hover {
+    @apply hover:-translate-y-1 hover:shadow-xl transition-all duration-300;
+  }
+  .skeleton-shimmer {
+    background: linear-gradient(90deg, oklch(var(--b2)) 25%, oklch(var(--b3)) 50%, oklch(var(--b2)) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  .input-custom {
+    @apply border border-base-300 focus:border-primary bg-base-100 rounded-xl px-4 py-2.5 w-full outline-none transition-colors text-base-content placeholder:text-base-content/40;
+  }
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
+  }
+  .section-label {
+    @apply text-xs font-semibold tracking-widest text-primary uppercase;
+  }
+  .glass-card {
+    @apply bg-white/50 dark:bg-base-100/50 backdrop-blur-sm border border-white/20;
+  }
 }
