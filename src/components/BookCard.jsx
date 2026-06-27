@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 
 const BookCard = ({ book }) => {
   const { _id, title, author, imageURL, category, deliveryFee, status } = book
@@ -6,7 +7,12 @@ const BookCard = ({ book }) => {
   const isAvailable = status === 'Published' || status === 'available'
 
   return (
-    <div className="card bg-base-100 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 rounded-2xl overflow-hidden">
+    <motion.div
+      whileHover={{ y: -4, boxShadow: '0 20px 40px rgba(0,0,0,0.12)' }}
+      transition={{ duration: 0.2 }}
+      className="card bg-base-100 shadow-md rounded-2xl overflow-hidden"
+    >
+    <div className="h-full">
       <figure className="relative h-52">
         <img
           src={imageURL || 'https://placehold.co/400x300/e2e8f0/1e293b?text=No+Cover'}
@@ -36,6 +42,7 @@ const BookCard = ({ book }) => {
         </Link>
       </div>
     </div>
+    </motion.div>
   )
 }
 
