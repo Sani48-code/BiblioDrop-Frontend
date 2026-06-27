@@ -7,11 +7,11 @@ import { uploadImage } from '../../../utils/uploadImage'
 
 const CATEGORIES = ['Fiction', 'Sci-Fi', 'Academic', 'History', 'Biography', 'Technology', 'Children', 'Other']
 
-const statusStyle = {
-  'Pending Approval': 'badge-warning',
-  Published: 'badge-success',
-  Unpublished: 'badge-neutral',
-  'Checked Out': 'badge-info',
+const STATUS_STYLE = {
+  'Pending Approval': 'bg-warning/10 text-warning',
+  Published: 'bg-success/10 text-success',
+  Unpublished: 'bg-base-300 text-base-content/60',
+  'Checked Out': 'bg-info/10 text-info',
 }
 
 const ManageInventory = () => {
@@ -97,61 +97,75 @@ const ManageInventory = () => {
     }
   }
 
-  if (loading) return <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-16 bg-base-200 rounded-xl animate-pulse" />)}</div>
+  if (loading) return <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-16 bg-base-200 rounded-2xl animate-pulse" />)}</div>
+
+  const ActionBtn = ({ onClick, title, children, danger }) => (
+    <button
+      onClick={onClick}
+      title={title}
+      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${danger ? 'bg-error/10 text-error/70 hover:bg-error/20 hover:text-error' : 'bg-base-200 text-base-content/50 hover:bg-base-300 hover:text-base-content'}`}
+    >
+      {children}
+    </button>
+  )
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-display font-bold">Manage Inventory</h1>
-        <span className="badge badge-neutral">{books.length} books</span>
+        <h1 className="font-display text-2xl text-base-content">Manage Inventory</h1>
+        <span className="text-sm text-base-content/40">{books.length} books</span>
       </div>
 
       {books.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-base-content/40 gap-4">
-          <BookCopy size={48} />
-          <p className="text-lg font-semibold">No books listed yet</p>
+        <div className="bg-base-100 border border-base-200 rounded-2xl p-16 text-center">
+          <BookCopy size={40} className="text-base-content/20 mx-auto mb-3" />
+          <p className="text-base-content/40 text-sm">No books listed yet</p>
         </div>
       ) : (
-        <div className="card bg-base-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-base-100 border border-base-200 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="table">
+            <table className="w-full text-sm">
               <thead>
-                <tr>
-                  <th>Cover</th>
-                  <th>Title</th>
-                  <th>Category</th>
-                  <th>Fee</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                <tr className="bg-base-200 border-b border-base-300">
+                  {['Cover', 'Title', 'Category', 'Fee', 'Status', ''].map((h) => (
+                    <th key={h} className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-base-content/50">{h}</th>
+                  ))}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-base-200">
                 {books.map((book) => (
-                  <tr key={book._id} className="hover">
-                    <td>
-                      <img src={book.imageURL || 'https://placehold.co/40x50/e2e8f0/1e293b?text=📚'} alt={book.title} className="w-10 h-12 object-cover rounded-lg" />
+                  <tr key={book._id} className="hover:bg-base-200/40 transition-colors">
+                    <td className="px-5 py-3">
+                      <div className="w-8 h-11 rounded-md overflow-hidden bg-base-200">
+                        {book.imageURL
+                          ? <img src={book.imageURL} alt={book.title} className="w-full h-full object-cover" />
+                          : <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20" />
+                        }
+                      </div>
                     </td>
-                    <td className="font-medium text-sm max-w-[160px] truncate">{book.title}</td>
-                    <td><span className="badge badge-sm badge-secondary">{book.category}</span></td>
-                    <td className="text-primary font-semibold">${book.deliveryFee}</td>
-                    <td>
-                      <span className={`badge badge-sm ${statusStyle[book.status] || 'badge-ghost'}`}>
+                    <td className="px-5 py-3 font-medium text-base-content max-w-[180px] truncate">{book.title}</td>
+                    <td className="px-5 py-3">
+                      <span className="text-xs bg-base-200 text-base-content/60 px-2 py-1 rounded-full">{book.category}</span>
+                    </td>
+                    <td className="px-5 py-3 font-semibold text-base-content">৳{book.deliveryFee}</td>
+                    <td className="px-5 py-3">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[book.status] || 'bg-base-200 text-base-content'}`}>
                         {book.status}
                       </span>
                     </td>
-                    <td>
-                      <div className="flex gap-1">
-                        <button onClick={() => openEdit(book)} className="btn btn-ghost btn-xs" title="Edit">
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-1.5">
+                        <ActionBtn onClick={() => openEdit(book)} title="Edit book">
                           <Edit2 size={13} />
-                        </button>
+                        </ActionBtn>
                         {(book.status === 'Published' || book.status === 'Unpublished') && (
-                          <button onClick={() => handleToggle(book)} className="btn btn-ghost btn-xs" title={book.status === 'Published' ? 'Unpublish' : 'Publish'}>
+                          <ActionBtn onClick={() => handleToggle(book)} title={book.status === 'Published' ? 'Unpublish' : 'Publish'}>
                             {book.status === 'Published' ? <EyeOff size={13} /> : <Eye size={13} />}
-                          </button>
+                          </ActionBtn>
                         )}
-                        <button onClick={() => setDeleteId(book._id)} className="btn btn-ghost btn-xs text-error" title="Delete">
+                        <ActionBtn onClick={() => setDeleteId(book._id)} title="Delete book" danger>
                           <Trash2 size={13} />
-                        </button>
+                        </ActionBtn>
                       </div>
                     </td>
                   </tr>
@@ -162,52 +176,49 @@ const ManageInventory = () => {
         </div>
       )}
 
-      {/* Edit Modal */}
       {editBook && (
         <div className="modal modal-open">
-          <div className="modal-box rounded-2xl max-w-lg">
-            <h3 className="font-bold text-lg mb-4">Edit Book</h3>
+          <div className="modal-box rounded-2xl max-w-lg bg-base-100">
+            <h3 className="font-display text-lg text-base-content mb-4">Edit Book</h3>
             <form onSubmit={handleSubmit(handleEditSubmit)} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="label pb-1"><span className="label-text text-xs">Title</span></label>
-                  <input className="input input-bordered w-full input-sm" {...register('title', { required: true })} />
-                </div>
-                <div>
-                  <label className="label pb-1"><span className="label-text text-xs">Author</span></label>
-                  <input className="input input-bordered w-full input-sm" {...register('author', { required: true })} />
-                </div>
+                {[['title', 'Title'], ['author', 'Author']].map(([key, label]) => (
+                  <div key={key}>
+                    <label className="text-xs font-medium text-base-content/60 block mb-1">{label}</label>
+                    <input className="w-full border border-base-300 focus:border-primary rounded-xl px-3 py-2 text-sm bg-base-100 outline-none focus:ring-2 focus:ring-primary/20" {...register(key, { required: true })} />
+                  </div>
+                ))}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label pb-1"><span className="label-text text-xs">Category</span></label>
-                  <select className="select select-bordered w-full select-sm" {...register('category', { required: true })}>
+                  <label className="text-xs font-medium text-base-content/60 block mb-1">Category</label>
+                  <select className="w-full border border-base-300 focus:border-primary rounded-xl px-3 py-2 text-sm bg-base-100 outline-none focus:ring-2 focus:ring-primary/20" {...register('category', { required: true })}>
                     {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="label pb-1"><span className="label-text text-xs">Delivery Fee ($)</span></label>
-                  <input type="number" min={1} step="0.01" className="input input-bordered w-full input-sm" {...register('deliveryFee', { required: true, min: 1 })} />
+                  <label className="text-xs font-medium text-base-content/60 block mb-1">Delivery Fee (৳)</label>
+                  <input type="number" min={1} step="0.01" className="w-full border border-base-300 focus:border-primary rounded-xl px-3 py-2 text-sm bg-base-100 outline-none focus:ring-2 focus:ring-primary/20" {...register('deliveryFee', { required: true, min: 1 })} />
                 </div>
               </div>
               <div>
-                <label className="label pb-1"><span className="label-text text-xs">Description</span></label>
-                <textarea className="textarea textarea-bordered w-full text-sm" rows={3} {...register('description', { required: true, minLength: 50 })} />
+                <label className="text-xs font-medium text-base-content/60 block mb-1">Description</label>
+                <textarea className="w-full border border-base-300 focus:border-primary rounded-xl px-3 py-2 text-sm bg-base-100 outline-none focus:ring-2 focus:ring-primary/20 resize-none" rows={3} {...register('description', { required: true, minLength: 50 })} />
               </div>
               <div>
-                <label className="label pb-1"><span className="label-text text-xs">Cover Image</span></label>
+                <label className="text-xs font-medium text-base-content/60 block mb-1">Cover Image</label>
                 <div className="flex items-center gap-3">
-                  {editImageURL && <img src={editImageURL} alt="cover" className="w-12 h-14 object-cover rounded-lg" />}
-                  <label className="btn btn-ghost btn-sm gap-1 cursor-pointer">
+                  {editImageURL && <img src={editImageURL} alt="cover" className="w-10 h-14 object-cover rounded-lg border border-base-300" />}
+                  <label className="flex items-center gap-2 border border-base-300 hover:border-primary text-sm text-base-content/60 px-3 py-2 rounded-xl cursor-pointer transition-colors">
                     <input type="file" accept="image/*" className="hidden" onChange={handleEditUpload} />
-                    {uploading ? <span className="loading loading-spinner loading-xs" /> : 'Change image'}
+                    {uploading ? <span className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /> : 'Change image'}
                   </label>
                 </div>
               </div>
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setEditBook(null); reset() }}>Cancel</button>
-                <button type="submit" disabled={submitting} className="btn btn-primary btn-sm">
-                  {submitting ? <span className="loading loading-spinner loading-xs" /> : 'Save Changes'}
+                <button type="button" className="border border-base-300 text-base-content/60 px-4 py-2 rounded-xl text-sm cursor-pointer hover:border-base-400" onClick={() => { setEditBook(null); reset() }}>Cancel</button>
+                <button type="submit" disabled={submitting} className="bg-primary text-primary-content px-5 py-2 rounded-xl text-sm font-medium cursor-pointer hover:opacity-90 disabled:opacity-50">
+                  {submitting ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" /> : 'Save Changes'}
                 </button>
               </div>
             </form>
@@ -216,15 +227,14 @@ const ManageInventory = () => {
         </div>
       )}
 
-      {/* Delete modal */}
       {deleteId && (
         <div className="modal modal-open">
-          <div className="modal-box rounded-2xl">
-            <h3 className="font-bold text-lg mb-2">Delete Book</h3>
-            <p className="text-base-content/60 mb-6">Are you sure? This cannot be undone.</p>
+          <div className="modal-box rounded-2xl bg-base-100">
+            <h3 className="font-display text-lg text-base-content mb-2">Delete Book</h3>
+            <p className="text-base-content/60 text-sm mb-6">Are you sure? This cannot be undone.</p>
             <div className="flex justify-end gap-3">
-              <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="btn btn-error" onClick={handleDelete}>Delete</button>
+              <button className="border border-base-300 text-base-content/60 px-5 py-2 rounded-xl text-sm cursor-pointer hover:border-base-400" onClick={() => setDeleteId(null)}>Cancel</button>
+              <button className="bg-error text-white px-5 py-2 rounded-xl text-sm cursor-pointer hover:opacity-90" onClick={handleDelete}>Delete</button>
             </div>
           </div>
           <div className="modal-backdrop" onClick={() => setDeleteId(null)} />
