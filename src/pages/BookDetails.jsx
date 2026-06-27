@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
-import { Heart, ShoppingCart, Edit2, Trash2, EyeOff, Eye } from 'lucide-react'
+import { Heart, ShoppingCart, Edit2, Trash2, EyeOff, Eye, CheckCircle, XCircle, Truck, Shield } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useForm } from 'react-hook-form'
 import { useAuth } from '../contexts/AuthContext'
+import { useAxiosSecure } from '../hooks/useAxiosSecure'
 import StarRating from '../components/StarRating'
 import LoadingSpinner from '../components/LoadingSpinner'
+import { BookOpen } from 'lucide-react'
 
 const API = import.meta.env.VITE_API_URL
 
@@ -14,57 +16,59 @@ const BookDetails = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const axiosSecure = useAxiosSecure()
 
   const [book, setBook] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [reviews, setReviews] = useState([])
   const [inWishlist, setInWishlist] = useState(false)
   const [wishlistLoading, setWishlistLoading] = useState(false)
   const [payLoading, setPayLoading] = useState(false)
-  const [reviews, setReviews] = useState([])
   const [canReview, setCanReview] = useState(false)
   const [userReview, setUserReview] = useState(null)
   const [reviewRating, setReviewRating] = useState(0)
-  const [editingReview, setEditingReview] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [editingReview, setEditingReview] = useState(false)
+  const [editRating, setEditRating] = useState(0)
 
   const { register, handleSubmit, reset, setValue } = useForm()
+
+  const fetchReviews = () =>
+    axios.get(`${API}/api/reviews?bookId=${id}`).then((res) => {
+      const revs = res.data?.reviews || res.data || []
+      setReviews(revs)
+      if (user) {
+        const myRev = revs.find((r) => r.userId === user._id || r.userEmail === user.email)
+        setUserReview(myRev || null)
+      }
+    }).catch(() => {})
 
   useEffect(() => {
     Promise.all([
       axios.get(`${API}/api/books/${id}`),
-      axios.get(`${API}/api/reviews?bookId=${id}`).catch(() => ({ data: [] })),
-    ]).then(([bookRes, reviewRes]) => {
+      fetchReviews(),
+    ]).then(([bookRes]) => {
       setBook(bookRes.data)
-      const revs = reviewRes.data?.reviews || reviewRes.data || []
-      setReviews(revs)
-    }).catch(() => toast.error('Failed to load book details'))
+    }).catch(() => toast.error('Failed to load book'))
       .finally(() => setLoading(false))
   }, [id])
 
   useEffect(() => {
     if (!user || !book) return
-    axios.get(`${API}/api/wishlist`, { withCredentials: true })
+    axiosSecure.get('/api/wishlist')
       .then((res) => {
         const list = res.data?.wishlist || res.data || []
         setInWishlist(list.some((w) => (w.bookId || w._id) === id))
       }).catch(() => {})
-
     if (user.role === 'user') {
-      axios.get(`${API}/api/orders/check-delivered?bookId=${id}`, { withCredentials: true })
+      axiosSecure.get(`/api/orders/check-delivered?bookId=${id}`)
         .then((res) => setCanReview(res.data?.canReview || false))
         .catch(() => {})
-
-      const myRev = reviews.find((r) => r.userId === user._id || r.userEmail === user.email)
-      setUserReview(myRev || null)
     }
-  }, [user, book, reviews, id])
+  }, [user, book, id])
 
   if (loading) return <LoadingSpinner />
-  if (!book) return (
-    <div className="flex items-center justify-center min-h-screen">
-      <p className="text-base-content/60">Book not found</p>
-    </div>
-  )
+  if (!book) return <div className="flex items-center justify-center min-h-[60vh] text-base-content/40">Book not found</div>
 
   const isOwner = user && book.librarianId === user._id
   const isAdmin = user?.role === 'admin'
@@ -75,296 +79,306 @@ const BookDetails = () => {
     setWishlistLoading(true)
     try {
       if (inWishlist) {
-        await axios.delete(`${API}/api/wishlist/${id}`, { withCredentials: true })
+        await axiosSecure.delete(`/api/wishlist/${id}`)
         setInWishlist(false)
         toast.success('Removed from wishlist')
       } else {
-        await axios.post(`${API}/api/wishlist`, { bookId: id }, { withCredentials: true })
+        await axiosSecure.post('/api/wishlist', { bookId: id })
         setInWishlist(true)
         toast.success('Added to wishlist')
       }
-    } catch {
-      toast.error('Wishlist action failed')
-    } finally {
-      setWishlistLoading(false)
-    }
+    } catch { toast.error('Failed') }
+    finally { setWishlistLoading(false) }
   }
 
   const handleRequestDelivery = async () => {
-    if (!user) return toast.error('Please login to request delivery')
+    if (!user) return toast.error('Please login first')
     setPayLoading(true)
     try {
-      const res = await axios.post(
-        `${API}/api/stripe/create-checkout-session`,
-        { bookId: id },
-        { withCredentials: true }
-      )
+      const res = await axiosSecure.post('/api/stripe/create-checkout-session', { bookId: id })
       window.location.href = res.data.url
-    } catch {
-      toast.error('Payment initiation failed')
-    } finally {
-      setPayLoading(false)
-    }
+    } catch { toast.error('Payment initiation failed') }
+    finally { setPayLoading(false) }
   }
 
   const handleDeleteBook = async () => {
     try {
-      await axios.delete(`${API}/api/books/${id}`, { withCredentials: true })
+      await axiosSecure.delete(`/api/books/${id}`)
       toast.success('Book deleted')
       navigate('/browse')
-    } catch {
-      toast.error('Delete failed')
-    }
+    } catch { toast.error('Delete failed') }
     setDeleteModalOpen(false)
   }
 
   const handleToggleStatus = async () => {
     const action = book.status === 'Published' ? 'unpublish' : 'publish'
     try {
-      await axios.patch(`${API}/api/books/${id}/${action}`, {}, { withCredentials: true })
+      await axiosSecure.patch(`/api/books/${id}/${action}`)
       setBook((b) => ({ ...b, status: action === 'publish' ? 'Published' : 'Unpublished' }))
       toast.success(`Book ${action}ed`)
-    } catch {
-      toast.error('Action failed')
-    }
+    } catch { toast.error('Failed') }
   }
 
   const handleSubmitReview = async (data) => {
-    if (!reviewRating) return toast.error('Please select a star rating')
+    if (!reviewRating) return toast.error('Please select a rating')
     try {
-      await axios.post(
-        `${API}/api/reviews`,
-        { bookId: id, rating: reviewRating, comment: data.comment },
-        { withCredentials: true }
-      )
+      await axiosSecure.post('/api/reviews', { bookId: id, rating: reviewRating, comment: data.comment })
       toast.success('Review submitted!')
-      reset()
-      setReviewRating(0)
-      const res = await axios.get(`${API}/api/reviews?bookId=${id}`)
-      setReviews(res.data?.reviews || res.data || [])
-    } catch {
-      toast.error('Failed to submit review')
-    }
+      reset(); setReviewRating(0)
+      await fetchReviews()
+    } catch { toast.error('Failed to submit review') }
   }
 
   const handleDeleteReview = async (reviewId) => {
     try {
-      await axios.delete(`${API}/api/reviews/${reviewId}`, { withCredentials: true })
-      setReviews((r) => r.filter((rev) => rev._id !== reviewId))
+      await axiosSecure.delete(`/api/reviews/${reviewId}`)
+      await fetchReviews()
       toast.success('Review deleted')
-    } catch {
-      toast.error('Failed to delete review')
-    }
+    } catch { toast.error('Failed') }
+  }
+
+  const handleEditReview = async (data) => {
+    try {
+      await axiosSecure.patch(`/api/reviews/${userReview._id}`, { rating: editRating, comment: data.editComment })
+      await fetchReviews()
+      setEditingReview(false)
+      toast.success('Review updated')
+    } catch { toast.error('Failed') }
   }
 
   const avgRating = reviews.length
-    ? (reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length).toFixed(1)
+    ? reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length
     : 0
 
-  const requestBtnDisabled =
-    !isAvailable || !user || isOwner || payLoading
-
-  const requestBtnTitle = !isAvailable
-    ? 'Currently unavailable'
-    : !user
-    ? 'Login to request delivery'
-    : isOwner
-    ? 'You own this book'
-    : ''
+  const requestDisabled = !isAvailable || !user || isOwner || payLoading
+  const requestTitle = !isAvailable ? 'Currently unavailable'
+    : !user ? 'Login to request delivery'
+    : isOwner ? 'You own this book' : ''
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-12">
-        {/* Left: image */}
-        <div>
-          <div className="relative rounded-2xl overflow-hidden shadow-lg">
-            <img
-              src={book.imageURL || 'https://placehold.co/600x400/e2e8f0/1e293b?text=No+Cover'}
-              alt={book.title}
-              className="w-full h-96 object-cover"
-            />
-            <span className={`absolute top-3 right-3 badge ${isAvailable ? 'badge-success' : 'badge-error'}`}>
-              {isAvailable ? 'Available' : 'Checked Out'}
-            </span>
+    <div className="container-custom py-12">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mb-16">
+        {/* Left — Image (sticky) */}
+        <div className="lg:col-span-5">
+          <div className="sticky top-24">
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl aspect-[3/4] bg-base-200">
+              {book.imageURL ? (
+                <img src={book.imageURL} alt={book.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                  <BookOpen size={64} className="text-primary/30" />
+                </div>
+              )}
+            </div>
+            {/* Status pill */}
+            <div className={`flex items-center gap-2 mt-4 px-4 py-2.5 rounded-xl w-fit ${isAvailable ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
+              {isAvailable ? <CheckCircle size={16} /> : <XCircle size={16} />}
+              <span className="text-sm font-medium">{isAvailable ? 'Available for Delivery' : 'Currently Checked Out'}</span>
+            </div>
+            {/* Wishlist */}
+            <button
+              onClick={handleWishlist}
+              disabled={wishlistLoading}
+              className={`flex items-center justify-center gap-2 w-full mt-3 py-3 rounded-xl border-2 transition-all text-sm font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 ${
+                inWishlist
+                  ? 'border-error text-error hover:bg-error/5'
+                  : 'border-base-300 text-base-content/70 hover:border-primary hover:text-primary'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              <Heart size={16} fill={inWishlist ? 'currentColor' : 'none'} />
+              {inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
+            </button>
           </div>
-
-          {/* Wishlist */}
-          <button
-            onClick={handleWishlist}
-            disabled={wishlistLoading}
-            className={`btn btn-outline mt-4 gap-2 w-full rounded-xl ${inWishlist ? 'border-error text-error' : ''}`}
-          >
-            <Heart size={18} fill={inWishlist ? 'currentColor' : 'none'} />
-            {inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
-          </button>
         </div>
 
-        {/* Right: details */}
-        <div className="flex flex-col gap-4">
+        {/* Right — Details */}
+        <div className="lg:col-span-7 flex flex-col gap-5">
           <div>
-            <span className="badge badge-secondary mb-2">{book.category}</span>
-            <h1 className="text-3xl font-display font-bold text-base-content mb-1">{book.title}</h1>
-            <p className="text-base-content/60 text-sm">by {book.author}</p>
-            <p className="text-xs text-base-content/40 mt-1">
-              Added: {book.createdAt ? new Date(book.createdAt).toLocaleDateString() : 'N/A'}
-            </p>
-          </div>
-
-          {reviews.length > 0 && (
-            <div className="flex items-center gap-2">
-              <StarRating value={Math.round(avgRating)} readOnly size="sm" />
-              <span className="text-sm text-base-content/60">{avgRating} ({reviews.length} reviews)</span>
-            </div>
-          )}
-
-          <p className="text-base-content/70 leading-relaxed text-sm">{book.description}</p>
-
-          <div className="mt-2">
-            <p className="text-xs text-base-content/50 uppercase tracking-wider mb-1">Delivery Fee</p>
-            <p className="text-3xl font-bold text-primary">${book.deliveryFee}</p>
-          </div>
-
-          <div title={requestBtnTitle}>
-            <button
-              onClick={handleRequestDelivery}
-              disabled={requestBtnDisabled}
-              className="btn btn-primary btn-wide rounded-xl gap-2"
-            >
-              {payLoading ? (
-                <span className="loading loading-spinner loading-sm" />
-              ) : (
-                <ShoppingCart size={18} />
-              )}
-              Request Delivery
-            </button>
-            {requestBtnTitle && (
-              <p className="text-xs text-base-content/50 mt-1">{requestBtnTitle}</p>
+            <span className="inline-block bg-primary/10 text-primary text-xs font-medium px-3 py-1 rounded-full mb-3">
+              {book.category}
+            </span>
+            <h1 className="font-display text-3xl sm:text-4xl text-base-content leading-tight mb-1">
+              {book.title}
+            </h1>
+            <p className="text-base-content/60 italic">by {book.author}</p>
+            {book.createdAt && (
+              <p className="text-xs text-base-content/40 mt-1">
+                Added {new Date(book.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+              </p>
             )}
           </div>
 
-          {/* Librarian owner controls */}
+          {reviews.length > 0 && (
+            <div className="flex items-center gap-3">
+              <StarRating value={Math.round(avgRating)} readOnly size="md" />
+              <span className="text-sm text-base-content/60">{avgRating.toFixed(1)} ({reviews.length} reviews)</span>
+            </div>
+          )}
+
+          <p className="text-base-content/70 leading-relaxed">{book.description}</p>
+
+          <div className="bg-base-200 rounded-2xl p-5">
+            <p className="text-xs text-base-content/50 uppercase tracking-wider mb-1">Delivery Fee</p>
+            <p className="font-display text-4xl font-bold text-primary">৳{book.deliveryFee}</p>
+          </div>
+
+          {/* Request button */}
+          <div>
+            <button
+              onClick={handleRequestDelivery}
+              disabled={requestDisabled}
+              title={requestTitle}
+              className={`w-full py-4 rounded-2xl font-semibold text-lg flex items-center justify-center gap-3 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 ${
+                requestDisabled
+                  ? 'bg-base-300 text-base-content/40 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 hover:-translate-y-0.5 active:translate-y-0 shadow-xl shadow-primary/25'
+              } disabled:opacity-60 disabled:pointer-events-none`}
+            >
+              {payLoading
+                ? <span className="loading loading-spinner loading-sm" />
+                : <ShoppingCart size={20} />
+              }
+              {!user ? 'Login to Request' : requestDisabled ? (requestTitle || 'Request Delivery') : 'Request Delivery'}
+            </button>
+            {requestTitle && <p className="text-xs text-base-content/40 mt-2 text-center">{requestTitle}</p>}
+          </div>
+
+          {/* Delivery info */}
+          {!requestDisabled && (
+            <div className="flex gap-4 text-sm text-base-content/60">
+              <div className="flex items-center gap-1.5"><Truck size={14} className="text-primary" /> 2–3 day delivery</div>
+              <div className="flex items-center gap-1.5"><Shield size={14} className="text-success" /> Secure payment via Stripe</div>
+            </div>
+          )}
+
+          {/* Owner controls */}
           {isOwner && (
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-base-300">
-              <button className="btn btn-ghost btn-sm gap-1">
-                <Edit2 size={14} /> Edit
-              </button>
-              {(book.status === 'Published' || book.status === 'Unpublished') && (
-                <button onClick={handleToggleStatus} className="btn btn-ghost btn-sm gap-1">
-                  {book.status === 'Published' ? <EyeOff size={14} /> : <Eye size={14} />}
-                  {book.status === 'Published' ? 'Unpublish' : 'Publish'}
+            <div className="border border-base-300 rounded-2xl p-5">
+              <h4 className="font-semibold text-sm mb-4 text-base-content/70">Manage This Book</h4>
+              <div className="flex flex-wrap gap-2">
+                <button className="btn btn-sm btn-ghost gap-1.5 border border-base-300 rounded-xl cursor-pointer">
+                  <Edit2 size={13} /> Edit
                 </button>
-              )}
-              <button
-                onClick={() => setDeleteModalOpen(true)}
-                className="btn btn-ghost btn-sm text-error gap-1"
-              >
-                <Trash2 size={14} /> Delete
-              </button>
+                {(book.status === 'Published' || book.status === 'Unpublished') && (
+                  <button onClick={handleToggleStatus} className="btn btn-sm btn-ghost gap-1.5 border border-base-300 rounded-xl cursor-pointer">
+                    {book.status === 'Published' ? <EyeOff size={13} /> : <Eye size={13} />}
+                    {book.status === 'Published' ? 'Unpublish' : 'Publish'}
+                  </button>
+                )}
+                <button onClick={() => setDeleteModalOpen(true)} className="btn btn-sm btn-ghost gap-1.5 text-error border border-error/20 rounded-xl cursor-pointer">
+                  <Trash2 size={13} /> Delete
+                </button>
+              </div>
             </div>
           )}
 
           {/* Admin controls */}
           {isAdmin && !isOwner && (
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-base-300">
-              <button onClick={handleToggleStatus} className="btn btn-warning btn-sm gap-1">
-                <EyeOff size={14} /> Force Unpublish
-              </button>
-              <button
-                onClick={() => setDeleteModalOpen(true)}
-                className="btn btn-error btn-sm gap-1"
-              >
-                <Trash2 size={14} /> Delete
-              </button>
+            <div className="border border-warning/20 rounded-2xl p-5 bg-warning/5">
+              <h4 className="font-semibold text-sm mb-4 text-warning">Admin Controls</h4>
+              <div className="flex gap-2">
+                <button onClick={handleToggleStatus} className="btn btn-sm btn-warning gap-1.5 rounded-xl cursor-pointer">
+                  <EyeOff size={13} /> Force Unpublish
+                </button>
+                <button onClick={() => setDeleteModalOpen(true)} className="btn btn-sm btn-error gap-1.5 rounded-xl cursor-pointer">
+                  <Trash2 size={13} /> Delete
+                </button>
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Reviews Section */}
-      <div className="border-t border-base-300 pt-10">
-        <div className="flex items-center gap-4 mb-6">
-          <h3 className="text-2xl font-display font-semibold">Reader Reviews</h3>
-          {reviews.length > 0 && (
-            <span className="badge badge-secondary">{reviews.length} reviews</span>
-          )}
+      {/* Reviews */}
+      <div className="border-t border-base-200 pt-12">
+        <div className="flex items-center gap-4 mb-8">
+          <h3 className="font-display text-2xl">Reader Reviews</h3>
+          {reviews.length > 0 && <span className="badge badge-secondary">{reviews.length}</span>}
         </div>
 
         {/* Review form */}
         {user?.role === 'user' && canReview && !userReview && (
-          <form onSubmit={handleSubmit(handleSubmitReview)} className="card bg-base-200 p-6 rounded-2xl mb-8 shadow-sm">
+          <form onSubmit={handleSubmit(handleSubmitReview)} className="bg-base-200 rounded-2xl p-6 mb-8">
             <h4 className="font-semibold mb-3">Write a Review</h4>
-            <div className="mb-3">
-              <StarRating value={reviewRating} onChange={setReviewRating} />
-            </div>
+            <div className="mb-3"><StarRating value={reviewRating} onChange={setReviewRating} size="lg" /></div>
             <textarea
               {...register('comment', { required: true })}
-              placeholder="Share your thoughts about this book..."
-              className="textarea textarea-bordered w-full mb-3"
+              placeholder="Share your thoughts..."
+              className="w-full border border-base-300 focus:border-primary rounded-xl p-3 text-sm outline-none bg-base-100 resize-none mb-3 transition-colors"
               rows={3}
             />
-            <button type="submit" className="btn btn-primary btn-sm">
+            <button type="submit" className="btn-primary-custom text-sm cursor-pointer">
               Submit Review
             </button>
           </form>
         )}
 
-        {/* User's own review */}
+        {/* Own review */}
         {userReview && (
-          <div className="card bg-primary/5 border border-primary/20 p-5 rounded-2xl mb-6">
+          <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 mb-6">
             <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold text-sm">Your Review</span>
+              <span className="text-sm font-semibold text-primary">Your Review</span>
               <div className="flex gap-2">
-                <button onClick={() => setEditingReview(true)} className="btn btn-ghost btn-xs"><Edit2 size={12} /></button>
-                <button onClick={() => handleDeleteReview(userReview._id)} className="btn btn-ghost btn-xs text-error"><Trash2 size={12} /></button>
+                <button onClick={() => { setEditingReview(true); setEditRating(userReview.rating); setValue('editComment', userReview.comment) }} className="btn btn-ghost btn-xs cursor-pointer"><Edit2 size={12} /></button>
+                <button onClick={() => handleDeleteReview(userReview._id)} className="btn btn-ghost btn-xs text-error cursor-pointer"><Trash2 size={12} /></button>
               </div>
             </div>
-            <StarRating value={userReview.rating} readOnly size="sm" />
-            <p className="text-sm mt-2 text-base-content/70">{userReview.comment}</p>
+            {editingReview ? (
+              <form onSubmit={handleSubmit(handleEditReview)} className="space-y-3">
+                <StarRating value={editRating} onChange={setEditRating} size="sm" />
+                <textarea {...register('editComment', { required: true })} className="w-full border border-base-300 focus:border-primary rounded-xl p-3 text-sm outline-none bg-base-100 transition-colors" rows={2} />
+                <div className="flex gap-2">
+                  <button type="submit" className="btn btn-primary btn-xs cursor-pointer">Save</button>
+                  <button type="button" onClick={() => setEditingReview(false)} className="btn btn-ghost btn-xs cursor-pointer">Cancel</button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <StarRating value={userReview.rating} readOnly size="sm" />
+                <p className="text-sm text-base-content/70 mt-2">{userReview.comment}</p>
+              </>
+            )}
           </div>
         )}
 
         {reviews.length === 0 && (
-          <div className="text-center py-12 text-base-content/40">
-            <p>No reviews yet. Be the first to review this book!</p>
+          <div className="text-center py-16 text-base-content/40">
+            <p className="text-lg">No reviews yet. Be the first!</p>
           </div>
         )}
 
         <div className="space-y-4">
-          {reviews
-            .filter((r) => r._id !== userReview?._id)
-            .map((rev) => (
-              <div key={rev._id} className="card bg-base-200 p-5 rounded-2xl">
-                <div className="flex items-start gap-3 mb-2">
-                  <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold shrink-0">
-                    {rev.userName?.charAt(0)?.toUpperCase() || 'U'}
+          {reviews.filter((r) => r._id !== userReview?._id).map((rev) => (
+            <div key={rev._id} className="bg-base-200 rounded-2xl p-5">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-bold shrink-0">
+                  {rev.userName?.charAt(0)?.toUpperCase() || 'U'}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between flex-wrap gap-1 mb-1">
+                    <span className="font-semibold text-sm">{rev.userName || 'Anonymous'}</span>
+                    <span className="text-xs text-base-content/40">
+                      {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString() : ''}
+                    </span>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-sm">{rev.userName || 'Anonymous'}</span>
-                      <span className="text-xs text-base-content/40">
-                        {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString() : ''}
-                      </span>
-                    </div>
-                    <StarRating value={rev.rating} readOnly size="sm" />
-                    <p className="text-sm mt-1 text-base-content/70">{rev.comment}</p>
-                  </div>
+                  <StarRating value={rev.rating} readOnly size="sm" />
+                  <p className="text-sm text-base-content/70 mt-1.5">{rev.comment}</p>
                 </div>
               </div>
-            ))}
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Delete confirm modal */}
+      {/* Delete modal */}
       {deleteModalOpen && (
         <div className="modal modal-open">
           <div className="modal-box rounded-2xl">
             <h3 className="font-bold text-lg mb-2">Delete Book</h3>
-            <p className="text-base-content/60 mb-6">
-              Are you sure you want to delete <strong>{book.title}</strong>? This action cannot be undone.
-            </p>
+            <p className="text-base-content/60 mb-6">Permanently delete <strong>{book.title}</strong>? This cannot be undone.</p>
             <div className="flex justify-end gap-3">
-              <button className="btn btn-ghost" onClick={() => setDeleteModalOpen(false)}>Cancel</button>
-              <button className="btn btn-error" onClick={handleDeleteBook}>Delete</button>
+              <button className="btn btn-ghost cursor-pointer" onClick={() => setDeleteModalOpen(false)}>Cancel</button>
+              <button className="btn btn-error cursor-pointer" onClick={handleDeleteBook}>Delete</button>
             </div>
           </div>
           <div className="modal-backdrop" onClick={() => setDeleteModalOpen(false)} />
