@@ -48,107 +48,96 @@ const AddBook = () => {
     }
   }
 
+  const Field = ({ label, error, children }) => (
+    <div>
+      <label className="text-sm font-medium text-base-content/70 block mb-1.5">{label}</label>
+      {children}
+      {error && <p className="text-error text-xs mt-1">{error}</p>}
+    </div>
+  )
+
+  const inputClass = (err) =>
+    `w-full border ${err ? 'border-error' : 'border-base-300'} focus:border-primary rounded-xl px-4 py-3 text-sm bg-base-100 outline-none transition-colors focus:ring-2 focus:ring-primary/20`
+
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-2xl font-display font-bold mb-2">Add a New Book</h1>
-      <p className="text-base-content/60 text-sm mb-7">
-        Your book will be reviewed by admin before appearing publicly.
-      </p>
+    <div>
+      <h1 className="font-display text-2xl text-base-content mb-1">Add a New Book</h1>
+      <p className="text-base-content/50 text-sm mb-7">Your book will be reviewed by an admin before appearing publicly.</p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="label pb-1"><span className="label-text text-sm font-medium">Title *</span></label>
-            <input
-              className={`input input-bordered w-full ${errors.title ? 'input-error' : ''}`}
-              placeholder="Book title"
-              {...register('title', { required: 'Title is required' })}
-            />
-            {errors.title && <p className="text-error text-xs mt-1">{errors.title.message}</p>}
-          </div>
-          <div>
-            <label className="label pb-1"><span className="label-text text-sm font-medium">Author *</span></label>
-            <input
-              className={`input input-bordered w-full ${errors.author ? 'input-error' : ''}`}
-              placeholder="Author name"
-              {...register('author', { required: 'Author is required' })}
-            />
-            {errors.author && <p className="text-error text-xs mt-1">{errors.author.message}</p>}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="label pb-1"><span className="label-text text-sm font-medium">Category *</span></label>
-            <select
-              className={`select select-bordered w-full ${errors.category ? 'select-error' : ''}`}
-              {...register('category', { required: 'Category is required' })}
-            >
-              <option value="">Select category</option>
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            {errors.category && <p className="text-error text-xs mt-1">{errors.category.message}</p>}
-          </div>
-          <div>
-            <label className="label pb-1"><span className="label-text text-sm font-medium">Delivery Fee ($) *</span></label>
-            <input
-              type="number"
-              min={1}
-              step="0.01"
-              className={`input input-bordered w-full ${errors.deliveryFee ? 'input-error' : ''}`}
-              placeholder="e.g. 3.50"
-              {...register('deliveryFee', { required: 'Fee is required', min: { value: 1, message: 'Min $1' } })}
-            />
-            {errors.deliveryFee && <p className="text-error text-xs mt-1">{errors.deliveryFee.message}</p>}
-          </div>
-        </div>
-
-        <div>
-          <label className="label pb-1"><span className="label-text text-sm font-medium">Description *</span></label>
-          <textarea
-            className={`textarea textarea-bordered w-full ${errors.description ? 'textarea-error' : ''}`}
-            rows={4}
-            placeholder="Describe the book (min 50 characters)..."
-            {...register('description', { required: 'Description is required', minLength: { value: 50, message: 'Min 50 characters' } })}
-          />
-          {errors.description && <p className="text-error text-xs mt-1">{errors.description.message}</p>}
-        </div>
-
-        {/* Cover image */}
-        <div>
-          <label className="label pb-1"><span className="label-text text-sm font-medium">Book Cover *</span></label>
-          <div className="flex flex-col sm:flex-row gap-4 items-start">
-            <div className="flex-1">
-              <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 cursor-pointer transition ${
-                uploading ? 'border-primary bg-primary/5' : 'border-base-300 hover:border-primary hover:bg-base-200'
-              }`}>
-                <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
-                {uploading ? (
-                  <span className="loading loading-spinner loading-md text-primary" />
-                ) : (
-                  <>
-                    <Upload size={24} className="text-base-content/40 mb-2" />
-                    <span className="text-sm text-base-content/60">Click to upload cover image</span>
-                  </>
-                )}
-              </label>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left column — form fields */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Title *" error={errors.title?.message}>
+                <input className={inputClass(errors.title)} placeholder="Book title" {...register('title', { required: 'Title is required' })} />
+              </Field>
+              <Field label="Author *" error={errors.author?.message}>
+                <input className={inputClass(errors.author)} placeholder="Author name" {...register('author', { required: 'Author is required' })} />
+              </Field>
             </div>
-            {preview && (
-              <div className="shrink-0">
-                <img src={preview} alt="Cover preview" className="w-24 h-32 object-cover rounded-xl border-2 border-primary shadow-md" />
-              </div>
-            )}
-            {!preview && !uploading && (
-              <div className="w-24 h-32 rounded-xl bg-base-300 flex items-center justify-center shrink-0">
-                <Image size={28} className="text-base-content/30" />
-              </div>
-            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Category *" error={errors.category?.message}>
+                <select className={inputClass(errors.category)} {...register('category', { required: 'Category is required' })}>
+                  <option value="">Select category</option>
+                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </Field>
+              <Field label="Delivery Fee (৳) *" error={errors.deliveryFee?.message}>
+                <input
+                  type="number" min={1} step="0.01"
+                  className={inputClass(errors.deliveryFee)}
+                  placeholder="e.g. 80"
+                  {...register('deliveryFee', { required: 'Fee is required', min: { value: 1, message: 'Min ৳1' } })}
+                />
+              </Field>
+            </div>
+
+            <Field label="Description *" error={errors.description?.message}>
+              <textarea
+                className={`${inputClass(errors.description)} resize-none`}
+                rows={5}
+                placeholder="Describe the book (min 50 characters)..."
+                {...register('description', { required: 'Description is required', minLength: { value: 50, message: 'Min 50 characters' } })}
+              />
+            </Field>
+
+            <button
+              type="submit"
+              disabled={submitting || uploading}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-semibold hover:opacity-90 hover:-translate-y-0.5 transition-all shadow-lg shadow-primary/25 cursor-pointer disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2"
+            >
+              {submitting ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Submit for Approval'}
+            </button>
+          </div>
+
+          {/* Right column — image upload */}
+          <div>
+            <p className="text-sm font-medium text-base-content/70 mb-1.5">Book Cover *</p>
+            <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-8 cursor-pointer transition-colors aspect-[3/4] ${uploading ? 'border-primary bg-primary/5' : 'border-base-300 hover:border-primary hover:bg-base-200/50'}`}>
+              <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+              {preview ? (
+                <img src={preview} alt="Cover preview" className="w-full h-full object-cover rounded-xl" />
+              ) : uploading ? (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-8 h-8 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
+                  <span className="text-sm text-base-content/50">Uploading...</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-3 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-base-200 flex items-center justify-center">
+                    <Upload size={28} className="text-base-content/30" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-base-content/60">Click to upload cover</p>
+                    <p className="text-xs text-base-content/40 mt-1">PNG, JPG up to 5MB</p>
+                  </div>
+                </div>
+              )}
+            </label>
           </div>
         </div>
-
-        <button type="submit" disabled={submitting || uploading} className="btn btn-primary w-full rounded-xl">
-          {submitting ? <span className="loading loading-spinner loading-sm" /> : 'Submit for Approval'}
-        </button>
       </form>
     </div>
   )
