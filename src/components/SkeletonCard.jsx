@@ -1,10 +1,14 @@
 const SkeletonCard = () => (
-  <div className="card bg-base-200 animate-pulse rounded-2xl">
-    <div className="h-52 bg-base-300 rounded-t-2xl" />
-    <div className="card-body gap-3">
-      <div className="h-4 bg-base-300 rounded w-3/4" />
-      <div className="h-3 bg-base-300 rounded w-1/2" />
-      <div className="h-3 bg-base-300 rounded w-1/3" />
+  <div className="rounded-2xl overflow-hidden border border-base-200">
+    <div className="h-56 skeleton-shimmer" />
+    <div className="p-4 space-y-3">
+      <div className="h-3 skeleton-shimmer rounded-full w-16" />
+      <div className="h-5 skeleton-shimmer rounded w-4/5" />
+      <div className="h-4 skeleton-shimmer rounded w-3/5" />
+      <div className="flex justify-between mt-4">
+        <div className="h-6 skeleton-shimmer rounded w-16" />
+        <div className="h-8 skeleton-shimmer rounded-xl w-24" />
+      </div>
     </div>
   </div>
 )

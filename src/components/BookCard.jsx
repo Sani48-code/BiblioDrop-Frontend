@@ -1,48 +1,58 @@
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { BookOpen } from 'lucide-react'
 
 const BookCard = ({ book }) => {
   const { _id, title, author, imageURL, category, deliveryFee, status } = book
-
   const isAvailable = status === 'Published' || status === 'available'
 
   return (
-    <motion.div
-      whileHover={{ y: -4, boxShadow: '0 20px 40px rgba(0,0,0,0.12)' }}
-      transition={{ duration: 0.2 }}
-      className="card bg-base-100 shadow-md rounded-2xl overflow-hidden"
-    >
-    <div className="h-full">
-      <figure className="relative h-52">
-        <img
-          src={imageURL || 'https://placehold.co/400x300/e2e8f0/1e293b?text=No+Cover'}
-          alt={title}
-          className="w-full h-full object-cover"
-        />
+    <div className="group bg-base-100 rounded-2xl overflow-hidden border border-base-200 hover:border-primary/30 hover:-translate-y-2 hover:shadow-xl hover:shadow-black/10 transition-all duration-300">
+      {/* Image */}
+      <div className="relative h-56 overflow-hidden">
+        {imageURL ? (
+          <img
+            src={imageURL}
+            alt={title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+            <BookOpen size={48} className="text-primary/40" />
+          </div>
+        )}
         <span
-          className={`absolute top-2 right-2 badge text-xs font-semibold ${
-            isAvailable ? 'badge-success' : 'badge-error'
+          className={`absolute top-3 right-3 text-white text-xs px-2.5 py-1 rounded-full backdrop-blur-sm font-medium ${
+            isAvailable ? 'bg-success/90' : 'bg-error/90'
           }`}
         >
-          {isAvailable ? 'Available' : 'Unavailable'}
+          {isAvailable ? 'Available' : 'Checked Out'}
         </span>
-      </figure>
-      <div className="card-body p-4 gap-2">
-        <h3 className="font-semibold text-base-content truncate text-sm leading-tight">{title}</h3>
-        <p className="text-xs text-base-content/60">{author}</p>
-        <div className="flex items-center justify-between mt-1">
-          <span className="badge badge-secondary badge-sm">{category}</span>
-          <span className="text-primary font-semibold text-sm">${deliveryFee}</span>
+      </div>
+
+      {/* Body */}
+      <div className="p-4">
+        <span className="inline-block bg-primary/10 text-primary text-xs rounded-full px-2.5 py-0.5 mb-2 font-medium">
+          {category}
+        </span>
+        <h3 className="font-display font-semibold text-base-content text-base leading-snug line-clamp-2 mb-1">
+          {title}
+        </h3>
+        <p className="text-sm text-base-content/60 mb-3">{author}</p>
+
+        <div className="flex items-end justify-between mt-auto">
+          <div>
+            <p className="text-primary font-semibold text-lg leading-none">৳{deliveryFee}</p>
+            <p className="text-xs text-base-content/40 mt-0.5">delivery fee</p>
+          </div>
+          <Link
+            to={`/books/${_id}`}
+            className="bg-primary text-primary-content text-sm px-4 py-2 rounded-xl hover:opacity-90 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2"
+          >
+            View Details
+          </Link>
         </div>
-        <Link
-          to={`/books/${_id}`}
-          className="btn btn-primary btn-sm mt-2 rounded-lg"
-        >
-          View Details
-        </Link>
       </div>
     </div>
-    </motion.div>
   )
 }
 
