@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, useInView } from 'framer-motion'
 import {
   BookOpen, CreditCard, PackageCheck, ArrowRight,
-  Rocket, GraduationCap, Landmark, User, Cpu, Baby, Layers,
+  Rocket, GraduationCap, Landmark, User, Cpu, Baby, Layers, CheckCircle,
 } from 'lucide-react'
 import axios from 'axios'
 import BookCard from '../components/BookCard'
@@ -21,38 +21,75 @@ const PLACEHOLDER_BOOKS = [
 ]
 
 const CATEGORIES = [
-  { label: 'Fiction', icon: BookOpen, count: '~180 books' },
-  { label: 'Sci-Fi', icon: Rocket, count: '~92 books' },
-  { label: 'Academic', icon: GraduationCap, count: '~145 books' },
-  { label: 'History', icon: Landmark, count: '~78 books' },
-  { label: 'Biography', icon: User, count: '~63 books' },
-  { label: 'Technology', icon: Cpu, count: '~110 books' },
-  { label: 'Children', icon: Baby, count: '~95 books' },
-  { label: 'Other', icon: Layers, count: '~40 books' },
+  { label: 'Fiction', icon: BookOpen, count: '~180 books', image: 'https://images.unsplash.com/photo-1476275466078-4cdc8d0a7ef3?w=400&q=80' },
+  { label: 'Sci-Fi', icon: Rocket, count: '~92 books', image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&q=80' },
+  { label: 'Academic', icon: GraduationCap, count: '~145 books', image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&q=80' },
+  { label: 'History', icon: Landmark, count: '~78 books', image: 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?w=400&q=80' },
+  { label: 'Biography', icon: User, count: '~63 books', image: 'https://images.unsplash.com/photo-1529590003495-c39735c7e2f7?w=400&q=80' },
+  { label: 'Technology', icon: Cpu, count: '~110 books', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80' },
+  { label: 'Children', icon: Baby, count: '~95 books', image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&q=80' },
+  { label: 'Other', icon: Layers, count: '~40 books', image: 'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=400&q=80' },
 ]
 
 const TOP_LIBRARIANS = [
-  { name: 'Sarah Ahmed', deliveries: 142, initials: 'SA', bg: 'from-indigo-500 to-primary', specialties: ['Fiction', 'Biography'] },
-  { name: 'Rahman Khan', deliveries: 98, initials: 'RK', bg: 'from-cyan-500 to-secondary', specialties: ['Academic', 'Sci-Fi'] },
-  { name: 'Priya Sharma', deliveries: 87, initials: 'PS', bg: 'from-amber-500 to-accent', specialties: ['Children', 'History'] },
+  { name: 'Sarah Ahmed', deliveries: 142, avatar: 'https://randomuser.me/api/portraits/women/44.jpg', specialties: ['Fiction', 'Biography'] },
+  { name: 'Rahman Khan', deliveries: 98, avatar: 'https://randomuser.me/api/portraits/men/32.jpg', specialties: ['Academic', 'Sci-Fi'] },
+  { name: 'Priya Sharma', deliveries: 87, avatar: 'https://randomuser.me/api/portraits/women/68.jpg', specialties: ['Children', 'History'] },
 ]
 
 const TESTIMONIALS = [
-  { text: 'BiblioDrop changed how I read. I got 4 books delivered in a single month without leaving my desk.', name: 'Tanvir H.' },
-  { text: 'As a student, this is a lifesaver. Academic books delivered for under 100 taka!', name: 'Nadia R.' },
-  { text: 'The librarians here are amazing. Quick delivery and the books were in perfect condition.', name: 'Sabbir K.' },
+  { text: 'BiblioDrop changed how I read. I got 4 books delivered in a single month without leaving my desk.', name: 'Tanvir H.', avatar: 'https://randomuser.me/api/portraits/men/52.jpg' },
+  { text: 'As a student, this is a lifesaver. Academic books delivered for under 100 taka!', name: 'Nadia R.', avatar: 'https://randomuser.me/api/portraits/women/26.jpg' },
+  { text: 'The librarians here are amazing. Quick delivery and the books were in perfect condition.', name: 'Sabbir K.', avatar: 'https://randomuser.me/api/portraits/men/71.jpg' },
 ]
 
 const STEPS = [
-  { icon: BookOpen, title: 'Browse & Discover', desc: 'Search through thousands of books from local libraries and independent owners' },
-  { icon: CreditCard, title: 'Pay Securely', desc: 'Pay a small delivery fee via Stripe. Fast and completely safe.' },
-  { icon: PackageCheck, title: 'Receive at Door', desc: 'Your books arrive within 2–3 days, no library visit needed' },
+  { icon: BookOpen, title: 'Browse & Discover', desc: 'Search through thousands of books from local libraries and independent owners', color: 'from-primary to-indigo-600' },
+  { icon: CreditCard, title: 'Pay Securely', desc: 'Pay a small delivery fee via Stripe. Fast and completely safe.', color: 'from-secondary to-cyan-500' },
+  { icon: PackageCheck, title: 'Receive at Door', desc: 'Your books arrive within 2–3 days, no library visit needed', color: 'from-success to-emerald-500' },
+]
+
+const STATS = [
+  { end: 500, suffix: '+', label: 'Books Available' },
+  { end: 120, suffix: '+', label: 'Expert Librarians' },
+  { end: 10000, suffix: '+', label: 'Happy Readers' },
+  { end: 4.9, suffix: '★', label: 'Average Rating', decimals: 1 },
 ]
 
 const fadeUp = (delay = 0) => ({
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, delay, ease: 'easeOut' } },
 })
+
+const SectionHeading = ({ label, title, centered = true }) => (
+  <div className={centered ? 'text-center' : ''}>
+    <p className="section-label mb-2">{label}</p>
+    <h2 className="font-display text-3xl sm:text-4xl text-base-content">{title}</h2>
+    <div className={`mt-3 h-1 w-12 bg-gradient-to-r from-primary to-secondary rounded-full ${centered ? 'mx-auto' : ''}`} />
+  </div>
+)
+
+const CountUp = ({ end, suffix = '', decimals = 0 }) => {
+  const [val, setVal] = useState(0)
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true })
+
+  useEffect(() => {
+    if (!inView) return
+    const duration = 1600
+    const startTime = Date.now()
+    const frame = () => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - (1 - progress) ** 3
+      setVal(+(eased * end).toFixed(decimals))
+      if (progress < 1) requestAnimationFrame(frame)
+    }
+    requestAnimationFrame(frame)
+  }, [inView, end, decimals])
+
+  return <span ref={ref}>{decimals ? val.toFixed(decimals) : val.toLocaleString()}{suffix}</span>
+}
 
 const Home = () => {
   const [books, setBooks] = useState([])
@@ -74,7 +111,7 @@ const Home = () => {
   const handleNewsletter = (e) => {
     e.preventDefault()
     if (!newsEmail) return
-    toast.success('🎉 You\'re on the list!')
+    toast.success('You\'re on the list!')
     setNewsEmail('')
   }
 
@@ -83,15 +120,13 @@ const Home = () => {
 
       {/* ─── Hero ─── */}
       <section className="relative min-h-screen flex items-center overflow-hidden">
-        {/* Dot grid background */}
         <div
-          className="absolute inset-0 opacity-40"
+          className="absolute inset-0 opacity-30"
           style={{
             backgroundImage: 'radial-gradient(circle, oklch(var(--b3)) 1px, transparent 1px)',
             backgroundSize: '32px 32px',
           }}
         />
-        {/* Radial glow */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="container-custom relative z-10 py-24">
@@ -123,7 +158,6 @@ const Home = () => {
                   Become a Librarian
                 </Link>
               </div>
-              {/* Stats */}
               <div className="flex items-center gap-6">
                 {[['500+', 'Books'], ['120+', 'Librarians'], ['2,000+', 'Readers']].map(([num, label], i) => (
                   <div key={label} className="flex items-center gap-4">
@@ -137,49 +171,49 @@ const Home = () => {
               </div>
             </motion.div>
 
-            {/* Right — 3D Book Stack */}
+            {/* Right — Real library photo */}
             <motion.div
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.7, delay: 0.2, ease: 'easeOut' }}
-              className="hidden lg:flex justify-center items-center"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+              className="hidden lg:block relative rounded-3xl overflow-hidden shadow-2xl shadow-primary/20"
             >
-              <div className="relative w-72 h-80">
-                {/* Back card */}
-                <div
-                  className="absolute w-52 h-72 rounded-2xl bg-base-300 shadow-lg"
-                  style={{ transform: 'rotate(-6deg) scale(0.92)', top: '10%', left: '5%' }}
-                />
-                {/* Mid card */}
-                <div
-                  className="absolute w-52 h-72 rounded-2xl bg-gradient-to-br from-secondary/60 to-secondary shadow-xl"
-                  style={{ transform: 'rotate(-2deg) scale(0.96)', top: '5%', left: '10%' }}
-                />
-                {/* Front card */}
-                <motion.div
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-                  className="absolute w-52 h-72 rounded-2xl bg-gradient-to-br from-primary to-primary/80 shadow-2xl shadow-primary/40 p-5 flex flex-col justify-between"
-                  style={{ transform: 'rotate(2deg)', top: '0%', left: '15%' }}
-                >
-                  <div>
-                    <div className="w-8 h-1 bg-white/40 rounded mb-2" />
-                    <div className="w-14 h-1 bg-white/30 rounded mb-1" />
-                  </div>
-                  <div className="w-full h-28 bg-white/10 rounded-xl flex items-center justify-center">
-                    <BookOpen size={40} className="text-white/60" />
-                  </div>
-                  <div>
-                    <p className="text-white font-display font-semibold text-sm">The Midnight Library</p>
-                    <p className="text-white/60 text-xs mt-0.5">Matt Haig</p>
-                    <div className="flex gap-0.5 mt-1">
-                      {[1,2,3,4,5].map((s) => (
-                        <svg key={s} width="10" height="10" viewBox="0 0 24 24" fill="#FBBF24"><path d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
+              <img
+                src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800&q=80"
+                alt="Library interior with bookshelves"
+                loading="lazy"
+                className="w-full h-[500px] object-cover"
+              />
+              {/* Soft gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
+
+              {/* Floating badge — bottom left */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.9, duration: 0.5 }}
+                className="absolute bottom-4 left-4 bg-white/85 backdrop-blur-sm rounded-xl px-4 py-3 shadow-lg flex items-center gap-3"
+              >
+                <span className="text-2xl">📚</span>
+                <div>
+                  <p className="font-semibold text-gray-900 text-sm leading-none">500+ Books</p>
+                  <p className="text-gray-500 text-xs mt-0.5">Available now</p>
+                </div>
+              </motion.div>
+
+              {/* Floating badge — top right */}
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.1, duration: 0.5 }}
+                className="absolute top-4 right-4 bg-white/85 backdrop-blur-sm rounded-xl px-4 py-3 shadow-lg flex items-center gap-3"
+              >
+                <span className="text-2xl">⭐</span>
+                <div>
+                  <p className="font-semibold text-gray-900 text-sm leading-none">4.9 Rating</p>
+                  <p className="text-gray-500 text-xs mt-0.5">From readers</p>
+                </div>
+              </motion.div>
             </motion.div>
           </div>
         </div>
@@ -190,11 +224,8 @@ const Home = () => {
       {/* ─── Featured Books ─── */}
       <section className="section-padding">
         <div className="container-custom">
-          <div className="flex items-end justify-between mb-12">
-            <div>
-              <p className="section-label mb-2">Featured Books</p>
-              <h2 className="font-display text-3xl sm:text-4xl text-base-content">Hand-picked for you</h2>
-            </div>
+          <div className="flex items-end justify-between mb-10">
+            <SectionHeading label="Featured Books" title="Hand-picked for you" centered={false} />
             <Link to="/browse" className="hidden md:flex items-center gap-1 text-primary text-sm font-medium hover:gap-2 transition-all">
               View all <ArrowRight size={15} />
             </Link>
@@ -205,19 +236,31 @@ const Home = () => {
               {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
           ) : (
-            <motion.div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-              variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-            >
-              {books.map((book, i) => (
-                <motion.div key={book._id} variants={fadeUp(i * 0.08)}>
-                  <BookCard book={book} />
-                </motion.div>
-              ))}
-            </motion.div>
+            <>
+              {/* Desktop grid */}
+              <motion.div
+                className="hidden sm:grid grid-cols-2 lg:grid-cols-3 gap-6"
+                variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+              >
+                {books.map((book, i) => (
+                  <motion.div key={book._id} variants={fadeUp(i * 0.06)}>
+                    <BookCard book={book} />
+                  </motion.div>
+                ))}
+              </motion.div>
+
+              {/* Mobile horizontal scroll */}
+              <div className="flex sm:hidden gap-4 overflow-x-auto pb-4 snap-x snap-mandatory -mx-4 px-4 scrollbar-hide">
+                {books.map((book) => (
+                  <div key={book._id} className="snap-start shrink-0 w-[280px]">
+                    <BookCard book={book} />
+                  </div>
+                ))}
+              </div>
+            </>
           )}
 
           <div className="text-center mt-10">
@@ -237,27 +280,29 @@ const Home = () => {
       <section className="section-padding bg-base-200">
         <div className="container-custom">
           <div className="text-center mb-16">
-            <p className="section-label mb-2">Simple Process</p>
-            <h2 className="font-display text-3xl sm:text-4xl text-base-content">How It Works</h2>
+            <SectionHeading label="Simple Process" title="How It Works" />
           </div>
           <div className="relative grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Connector line (desktop) */}
-            <div className="hidden md:block absolute top-10 left-1/6 right-1/6 h-0 border-t-2 border-dashed border-primary/30 z-0" />
-            {STEPS.map(({ icon: Icon, title, desc }, i) => (
+            {/* Dashed connector (desktop) */}
+            <div className="hidden md:block absolute top-10 left-[22%] right-[22%] h-0 border-t-2 border-dashed border-primary/25 z-0" />
+            {STEPS.map(({ icon: Icon, title, desc, color }, i) => (
               <motion.div
                 key={title}
                 variants={fadeUp(i * 0.15)}
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
-                className="relative z-10 text-center"
+                whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
+                className="relative z-10 text-center bg-base-100 rounded-2xl p-7 border border-base-200 hover:border-primary/20 hover:shadow-lg transition-shadow cursor-default"
               >
                 <div className="inline-flex flex-col items-center">
-                  <div className="w-20 h-20 rounded-2xl bg-base-100 border-2 border-primary/20 flex items-center justify-center mb-5 shadow-lg shadow-primary/10 relative">
-                    <span className="absolute -top-3 -right-3 w-6 h-6 rounded-full bg-primary text-primary-content text-xs font-bold flex items-center justify-center">
+                  <div className="relative mb-5">
+                    <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center shadow-lg`}>
+                      <Icon size={32} className="text-white" />
+                    </div>
+                    <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-base-100 border-2 border-primary text-primary text-xs font-bold flex items-center justify-center shadow-sm">
                       {i + 1}
                     </span>
-                    <Icon size={32} className="text-primary" />
                   </div>
                   <h3 className="font-semibold text-base-content text-lg mb-2">{title}</h3>
                   <p className="text-base-content/60 text-sm max-w-xs leading-relaxed">{desc}</p>
@@ -276,14 +321,11 @@ const Home = () => {
         />
         <div className="container-custom relative z-10">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              ['500+', 'Books Available'],
-              ['120+', 'Expert Librarians'],
-              ['10,000+', 'Happy Readers'],
-              ['4.9★', 'Average Rating'],
-            ].map(([num, label]) => (
+            {STATS.map(({ end, suffix, label, decimals = 0 }) => (
               <div key={label} className="text-center">
-                <p className="font-display text-4xl font-bold text-white mb-1">{num}</p>
+                <p className="font-display text-4xl font-bold text-white mb-1">
+                  <CountUp end={end} suffix={suffix} decimals={decimals} />
+                </p>
                 <p className="text-white/70 text-sm">{label}</p>
               </div>
             ))}
@@ -295,34 +337,52 @@ const Home = () => {
       <section className="section-padding bg-base-100">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <p className="section-label mb-2">Community</p>
-            <h2 className="font-display text-3xl sm:text-4xl text-base-content">Meet Our Top Librarians</h2>
+            <SectionHeading label="Community" title="Meet Our Top Librarians" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TOP_LIBRARIANS.map(({ name, deliveries, initials, bg, specialties }, i) => (
+            {TOP_LIBRARIANS.map(({ name, deliveries, avatar, specialties }, i) => (
               <motion.div
                 key={name}
                 variants={fadeUp(i * 0.1)}
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
-                className="bg-base-100 border border-base-200 rounded-2xl overflow-hidden hover:shadow-lg hover:border-primary/20 transition-all"
+                className="group bg-base-100 border border-base-200 rounded-2xl overflow-hidden hover:shadow-xl hover:border-primary/20 transition-all duration-300 relative"
               >
                 <div className="h-1 bg-gradient-to-r from-primary to-secondary" />
                 <div className="p-6">
-                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${bg} flex items-center justify-center text-white text-xl font-bold mb-4 shadow-md`}>
-                    {initials}
+                  {/* Avatar with ring + verified badge */}
+                  <div className="relative w-16 h-16 mb-4">
+                    <img
+                      src={avatar}
+                      alt={name}
+                      loading="lazy"
+                      onError={(e) => { e.currentTarget.style.display = 'none' }}
+                      className="w-16 h-16 rounded-2xl object-cover ring-2 ring-primary ring-offset-2"
+                    />
+                    <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-success rounded-full border-2 border-base-100 flex items-center justify-center">
+                      <CheckCircle size={11} className="text-white" fill="white" />
+                    </span>
                   </div>
+
                   <h3 className="font-semibold text-base-content text-lg">{name}</h3>
-                  <span className="inline-block badge badge-primary badge-sm mt-1">Master Librarian</span>
+                  <span className="inline-block text-xs bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-medium mt-1">Master Librarian</span>
+
                   <div className="flex items-center gap-1.5 mt-3 text-sm text-base-content/60">
                     <PackageCheck size={14} className="text-success" />
                     {deliveries} books delivered
                   </div>
                   <div className="flex gap-1.5 mt-3 flex-wrap">
                     {specialties.map((s) => (
-                      <span key={s} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">{s}</span>
+                      <span key={s} className="text-xs bg-base-200 text-base-content/60 px-2 py-0.5 rounded-full">{s}</span>
                     ))}
+                  </div>
+
+                  {/* Hover — View Profile slides up */}
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-primary/90 to-primary/70 py-4 flex items-center justify-center translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-b-2xl">
+                    <Link to="/browse" className="text-white text-sm font-semibold tracking-wide">
+                      View Profile →
+                    </Link>
                   </div>
                 </div>
               </motion.div>
@@ -337,11 +397,10 @@ const Home = () => {
       <section className="section-padding bg-base-200">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <p className="section-label mb-2">Explore</p>
-            <h2 className="font-display text-3xl sm:text-4xl text-base-content">Browse by Category</h2>
+            <SectionHeading label="Explore" title="Browse by Category" />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {CATEGORIES.map(({ label, icon: Icon, count }, i) => (
+            {CATEGORIES.map(({ label, icon: Icon, count, image }, i) => (
               <motion.button
                 key={label}
                 variants={fadeUp(i * 0.06)}
@@ -349,14 +408,23 @@ const Home = () => {
                 whileInView="visible"
                 viewport={{ once: true }}
                 onClick={() => navigate(`/browse?category=${label}`)}
-                className="group bg-base-100 border-2 border-transparent hover:border-primary rounded-2xl p-5 flex flex-col items-center gap-3 cursor-pointer hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="group relative rounded-2xl overflow-hidden h-32 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors">
-                  <Icon size={26} className="text-primary" />
-                </div>
-                <div className="text-center">
-                  <p className="font-semibold text-base-content text-sm">{label}</p>
-                  <p className="text-xs text-base-content/40 mt-0.5">{count}</p>
+                {/* Background image */}
+                <img
+                  src={image}
+                  alt={label}
+                  loading="lazy"
+                  onError={(e) => { e.currentTarget.style.display = 'none' }}
+                  className="absolute inset-0 w-full h-full object-cover brightness-75 group-hover:brightness-90 group-hover:scale-105 transition-all duration-400"
+                />
+                {/* Dark overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20 group-hover:from-black/50 transition-all" />
+                {/* Content */}
+                <div className="relative z-10 h-full flex flex-col items-center justify-center gap-1.5 p-3">
+                  <Icon size={22} className="text-white" />
+                  <p className="font-bold text-white text-sm leading-tight">{label}</p>
+                  <p className="text-white/70 text-xs">{count}</p>
                 </div>
               </motion.button>
             ))}
@@ -368,29 +436,32 @@ const Home = () => {
       <section className="section-padding bg-base-100">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <p className="section-label mb-2">Testimonials</p>
-            <h2 className="font-display text-3xl sm:text-4xl text-base-content">What Readers Say</h2>
+            <SectionHeading label="Testimonials" title="What Readers Say" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map(({ text, name }, i) => (
+            {TESTIMONIALS.map(({ text, name, avatar }, i) => (
               <motion.div
                 key={name}
                 variants={fadeUp(i * 0.1)}
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
-                className="relative bg-base-200 border border-base-300 rounded-2xl p-6 hover:border-primary/20 hover:shadow-md transition-all"
+                className="relative bg-base-100 border border-base-200 border-l-4 border-l-primary rounded-2xl p-6 hover:shadow-md transition-all"
               >
-                <span className="absolute top-4 left-5 text-5xl font-display text-primary/15 leading-none select-none">"</span>
-                <p className="text-base-content/70 text-sm italic leading-relaxed mt-4 mb-5">{text}</p>
+                <span className="absolute top-4 left-5 text-6xl font-display text-primary/15 leading-none select-none pointer-events-none">"</span>
+                <p className="text-base-content/70 text-sm italic leading-relaxed mt-5 mb-5">{text}</p>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-bold">
-                      {name.charAt(0)}
-                    </div>
+                    <img
+                      src={avatar}
+                      alt={name}
+                      loading="lazy"
+                      onError={(e) => { e.currentTarget.style.display = 'none' }}
+                      className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/30"
+                    />
                     <div>
-                      <p className="font-semibold text-sm">{name}</p>
-                      <span className="text-xs badge badge-success badge-sm">Verified Reader</span>
+                      <p className="font-semibold text-sm text-base-content">{name}</p>
+                      <span className="text-xs text-success font-medium">Verified Reader</span>
                     </div>
                   </div>
                   <StarRating value={5} readOnly size="sm" />
@@ -411,11 +482,8 @@ const Home = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <p className="section-label mb-3">Stay in the loop</p>
-              <h2 className="font-display text-3xl sm:text-4xl text-base-content mb-3">
-                New arrivals every week
-              </h2>
-              <p className="text-base-content/60 mb-8">
+              <SectionHeading label="Stay in the loop" title="New arrivals every week" />
+              <p className="text-base-content/60 mb-8 mt-4">
                 Get the latest book drops and exclusive deals delivered to your inbox.
               </p>
               <form onSubmit={handleNewsletter} className="flex gap-3 max-w-md mx-auto">

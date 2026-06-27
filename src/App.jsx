@@ -1,5 +1,25 @@
+import { useEffect, useState } from 'react'
 import { Routes, Route, Outlet } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+
+const ScrollProgress = () => {
+  const [pct, setPct] = useState(0)
+  useEffect(() => {
+    const onScroll = () => {
+      const el = document.documentElement
+      const scrolled = el.scrollTop / (el.scrollHeight - el.clientHeight)
+      setPct(Math.min(1, Math.max(0, scrolled)) * 100)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+  return (
+    <div
+      className="fixed top-0 left-0 z-[9999] h-0.5 bg-gradient-to-r from-primary to-secondary pointer-events-none transition-all duration-75"
+      style={{ width: `${pct}%` }}
+    />
+  )
+}
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import PrivateRoute from './components/PrivateRoute'
@@ -42,6 +62,7 @@ const PublicLayout = () => (
 
 const App = () => (
   <>
+    <ScrollProgress />
     <Toaster
       position="top-right"
       toastOptions={{
