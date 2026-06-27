@@ -27,6 +27,8 @@ const LinkedInIcon = () => (
   </svg>
 )
 
+const CURRENT_YEAR = 2025
+
 const Footer = () => {
   const [email, setEmail] = useState('')
 
@@ -114,7 +116,7 @@ const Footer = () => {
         {/* Bottom bar */}
         <div className="border-t border-base-300 pt-5 text-center">
           <p className="text-xs text-base-content/50">
-            © 2025 BiblioDrop. All rights reserved.
+            © {CURRENT_YEAR} BiblioDrop. All rights reserved.
           </p>
         </div>
       </div>
