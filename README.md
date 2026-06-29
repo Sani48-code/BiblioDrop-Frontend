@@ -1,87 +1,55 @@
-# BiblioDrop — Client
+![BiblioDrop Banner](https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1200&q=80)
 
-An online book delivery management platform connecting readers with local libraries and independent book owners.
+# BiblioDrop 📚
 
-## 🔗 Live URL
-[Add your Netlify/Vercel URL here]
+> Your Local Library, Delivered.
 
-## 🚀 Key Features
-- Browse, search, and filter books by category, price, and availability
-- Secure delivery fee payment via Stripe Checkout
-- Role-based dashboards for Users, Librarians, and Admins
-- Verified review system — only users who received a book can review it
-- Book image hosting via imgBB API
-- Wishlist system with persistent storage
-- Dark mode toggle with localStorage persistence
-- Framer Motion animations throughout
-- Recharts data visualizations in dashboards
-- Fully responsive — mobile, tablet, and desktop
+BiblioDrop is a full-stack online book delivery platform where readers can browse books from local libraries and request doorstep delivery — all in one place.
 
-## 📦 NPM Packages Used
-- react, react-dom — UI framework
-- react-router-dom — client-side routing
-- axios — HTTP requests
-- framer-motion — animations
-- recharts — charts and graphs
-- react-hook-form — form management
-- react-hot-toast — notifications
-- @stripe/stripe-js, @stripe/react-stripe-js — payment integration
-- better-auth — authentication client
-- lucide-react — icons
-- tailwindcss, daisyui — styling
+---
 
-## ⚙️ Environment Variables
-```
-VITE_API_URL=
-VITE_IMGBB_API_KEY=
-VITE_STRIPE_PUBLISHABLE_KEY=
-```
+## 🌐 Live Site
+🔗 [biblio-drop-frontend.vercel.app](https://biblio-drop-frontend.vercel.app)
 
-## 🛠️ Local Development
+---
 
-```bash
-npm install
-npm run dev
-```
+## 👨‍💻 Developer
+**Abdul Kaiyum Sani**
 
-## 🏗️ Build
+---
 
-```bash
-npm run build
-```
+## 🛠️ Tech Stack
 
-## 📁 Project Structure
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React, Vite, Tailwind CSS, DaisyUI |
+| Animation | Framer Motion |
+| Charts | Recharts |
+| Backend | Node.js, Express.js |
+| Database | MongoDB, Mongoose |
+| Auth | Better Auth, JWT (Cookie) |
+| Payment | Stripe |
+| Image Host | imgBB API |
 
-```
-src/
-├── main.jsx              # App entry — sets theme from localStorage before render
-├── App.jsx               # All routes
-├── index.css             # Tailwind + Google Fonts
-├── contexts/
-│   └── AuthContext.jsx   # Auth state, session restoration, login/logout/register
-├── hooks/
-│   └── useAxiosSecure.js # Authenticated Axios instance with 401/403 interceptor
-├── utils/
-│   └── uploadImage.js    # imgBB image upload utility
-├── components/           # Shared UI components
-│   ├── Navbar.jsx        # Responsive nav with dark mode + auth dropdown
-│   ├── Footer.jsx        # 3-column footer with newsletter
-│   ├── BookCard.jsx      # Reusable book card
-│   ├── SkeletonCard.jsx  # Loading skeleton
-│   ├── StarRating.jsx    # Read/write star rating
-│   ├── LoadingSpinner.jsx
-│   └── PrivateRoute.jsx  # Role-based route guard
-└── pages/
-    ├── Home.jsx           # Animated hero, featured books, categories, newsletter
-    ├── BrowseBooks.jsx    # Search + filter + paginated book grid
-    ├── BookDetails.jsx    # Book info, payment, wishlist, reviews
-    ├── Login.jsx          # Email/password + Google OAuth
-    ├── Register.jsx       # Multi-step form with role selection
-    ├── PaymentSuccess.jsx # Stripe redirect landing page
-    ├── NotFound.jsx       # 404 page
-    └── dashboard/
-        ├── DashboardLayout.jsx  # Sidebar + outlet
-        ├── user/          # Overview, history, reading list, reviews, wishlist
-        ├── librarian/     # Overview, add book, inventory, deliveries
-        └── admin/         # Overview, approval, users, books, transactions
-```
+---
+
+## ✨ Features
+
+- 🔐 Role-based access — Admin, Librarian, Reader
+- 📖 Browse, search & filter books by category, fee, availability
+- 💳 Stripe payment for delivery fee
+- 📦 Real-time delivery status — Pending → Dispatched → Delivered
+- ⭐ Verified reviews — only delivered users can review
+- 🖼️ imgBB image upload for book covers
+- 📊 Interactive dashboards with charts
+- 📱 Fully responsive — mobile, tablet, desktop
+
+---
+
+## 📦 Main NPM Packages
+
+**Frontend**
+`react` `react-router-dom` `axios` `framer-motion` `recharts` `react-hot-toast` `tailwindcss` `daisyui`
+
+**Backend**
+`express` `mongoose` `better-auth` `jsonwebtoken` `bcrypt` `stripe` `cookie-parser` `cors` `dotenv` `nodemon`
