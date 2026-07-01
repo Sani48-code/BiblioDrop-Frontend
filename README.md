@@ -20,18 +20,7 @@ BiblioDrop is a full-stack online book delivery platform where readers can brows
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React, Vite, Tailwind CSS, DaisyUI |
-| Animation | Framer Motion |
-| Charts | Recharts |
-| Backend | Node.js, Express.js |
-| Database | MongoDB, Mongoose |
-| Auth | Better Auth, JWT (Cookie) |
-| Payment | Stripe |
-| Image Host | imgBB API |
 
----
 
 ## ✨ Features
 

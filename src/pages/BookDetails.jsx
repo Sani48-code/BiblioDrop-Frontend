@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import axiosInstance from '../utils/axiosInstance'
 import { Heart, ShoppingCart, Edit2, Trash2, EyeOff, Eye, CheckCircle, XCircle, Truck, Shield } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useForm } from 'react-hook-form'
@@ -45,7 +46,7 @@ const BookDetails = () => {
 
   useEffect(() => {
     Promise.all([
-      axios.get(`${API}/api/books/${id}`),
+      axiosInstance.get(`/api/books/${id}`),
       fetchReviews(),
     ]).then(([bookRes]) => {
       setBook(bookRes.data)

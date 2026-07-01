@@ -6,7 +6,7 @@ const FALLBACK_IMG = 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?
 
 const BookCard = ({ book }) => {
   const { _id, title, author, imageURL, category, deliveryFee, status } = book
-  const isAvailable = status === 'Published' || status === 'available'
+  const isAvailable = status === 'Published'
   const [loaded, setLoaded] = useState(false)
 
   return (
