@@ -40,14 +40,8 @@ export const AuthProvider = ({ children }) => {
     return res.data
   }
 
-  const googleLogin = async () => {
-    try {
-      const { createAuthClient } = await import('better-auth/client')
-      const authClient = createAuthClient({ baseURL: API_URL })
-      await authClient.signIn.social({ provider: 'google', callbackURL: '/' })
-    } catch {
-      window.location.href = `${API_URL}/api/auth/google`
-    }
+  const googleLogin = () => {
+    window.location.href = `${API_URL}/api/auth/google`
   }
 
   const updateProfile = async (data) => {
