@@ -49,7 +49,8 @@ const BookDetails = () => {
       axiosInstance.get(`/api/books/${id}`),
       fetchReviews(),
     ]).then(([bookRes]) => {
-      setBook(bookRes.data)
+      console.log('bookRes.data:', bookRes.data)
+      setBook(bookRes.data.book)
     }).catch(() => toast.error('Failed to load book'))
       .finally(() => setLoading(false))
   }, [id])
